@@ -19,7 +19,11 @@ const MOCK_HOME_THREADS: ThreadResponse[] = [
   { id: 204, title: 'Has anyone tried the new Vite build tools?', spaceId: 1, author: { id: 13, username: 'SpeedCoder', email: 'speed@test.com' } }
 ];
 
-export default function HomeScreen() {
+interface HomeScreenProps {
+  onThreadSelect?: (id: number) => void;
+}
+
+export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>(MOCK_HOME_THREADS);
 
   const renderHeader = () => (
@@ -42,7 +46,12 @@ export default function HomeScreen() {
         <FlatList
           data={threads}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <ThreadCard thread={item} />}
+          renderItem={({ item }) => (
+            <ThreadCard 
+              thread={item} 
+              onPress={() => onThreadSelect && onThreadSelect(item.id)} 
+            />
+          )}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
