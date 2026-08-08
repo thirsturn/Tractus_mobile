@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import TopNav from '../components/TopNav';
 
@@ -33,17 +34,60 @@ const MOCK_THREAD_DETAIL = {
   }
 };
 
-const MOCK_COMMENTS = [
-  { id: 101, author: 'CodeNinja', initial: 'C', time: '1 hr ago', content: 'Honestly, I think Elixir is still criminally underrated. The BEAM ecosystem makes building fault-tolerant real-time systems so trivial compared to Node or Go.' },
-  { id: 102, author: 'DataWizard', initial: 'D', time: '45 mins ago', content: 'Zig is fantastic if you are doing systems programming, but for web backends? It might be overkill. Stick to Go unless you really need that manual memory management.' },
-  { id: 103, author: 'DesignPro', initial: 'D', time: '20 mins ago', content: 'What about Kotlin? It is huge in mobile but I feel like backend devs sleep on it. Ktor is incredibly nice to use.' }
+const INITIAL_MOCK_COMMENTS = [
+  { id: 101, author: 'CodeNinja', initial: 'C', time: '1 hr ago', content: 'Honestly, I think Elixir is still criminally underrated. The BEAM ecosystem makes building fault-tolerant real-time systems so trivial compared to Node or Go.', upvotes: 24, hasUpvoted: false },
+  { id: 102, author: 'DataWizard', initial: 'D', time: '45 mins ago', content: 'Zig is fantastic if you are doing systems programming, but for web backends? It might be overkill. Stick to Go unless you really need that manual memory management.', upvotes: 18, hasUpvoted: false },
+  { id: 103, author: 'DesignPro', initial: 'D', time: '20 mins ago', content: 'What about Kotlin? It is huge in mobile but I feel like backend devs sleep on it. Ktor is incredibly nice to use.', upvotes: 5, hasUpvoted: false }
 ];
+
+const CURRENT_USER = {
+  username: 'AlexDev',
+  initial: 'A',
+  profileImageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', // Realistic mock avatar
+};
 
 export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsScreenProps) {
   const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState(INITIAL_MOCK_COMMENTS);
+  const inputRef = useRef<TextInput>(null);
   
   // In a real app we'd fetch the thread based on threadId. Using mock for now.
   const thread = MOCK_THREAD_DETAIL;
+
+  const handleAddComment = () => {
+    if (!commentText.trim()) return;
+    const newComment = {
+      id: Date.now(),
+      author: CURRENT_USER.username,
+      initial: CURRENT_USER.initial,
+      profileImageUrl: CURRENT_USER.profileImageUrl,
+      time: 'Just now',
+      content: commentText.trim(),
+      upvotes: 0,
+      hasUpvoted: false,
+    };
+    setComments([...comments, newComment]);
+    setCommentText('');
+    inputRef.current?.blur();
+  };
+
+  const handleReply = (author: string) => {
+    setCommentText(`@${author} `);
+    inputRef.current?.focus();
+  };
+
+  const handleUpvote = (id: number) => {
+    setComments(comments.map(c => {
+      if (c.id === id) {
+        return {
+          ...c,
+          hasUpvoted: !c.hasUpvoted,
+          upvotes: c.hasUpvoted ? c.upvotes - 1 : c.upvotes + 1
+        };
+      }
+      return c;
+    }));
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -92,7 +136,7 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
             
             <TouchableOpacity style={styles.actionBtn}>
               <Feather name="message-square" size={18} color="#6b7280" />
-              <Text style={styles.actionText}>{thread.stats.comments} Comments</Text>
+              <Text style={styles.actionText}>{thread.stats.comments + (comments.length - INITIAL_MOCK_COMMENTS.length)} Comments</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.actionBtn}>
@@ -113,11 +157,14 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
           
           {/* Comment Input */}
           <View style={styles.commentInputArea}>
-            <View style={[styles.authorAvatar, styles.smallAvatar]}>
-              <Text style={styles.authorAvatarText}>U</Text>
-            </View>
+            <Image 
+              source={{ uri: CURRENT_USER.profileImageUrl }} 
+              style={styles.smallAvatar} 
+              contentFit="cover" 
+            />
             <View style={styles.inputWrapper}>
               <TextInput
+                ref={inputRef}
                 style={styles.textInput}
                 placeholder="Add a comment..."
                 placeholderTextColor="#9ca3af"
@@ -125,7 +172,7 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
                 onChangeText={setCommentText}
                 multiline
               />
-              <TouchableOpacity style={styles.sendBtn} disabled={!commentText.trim()}>
+              <TouchableOpacity style={styles.sendBtn} onPress={handleAddComment} disabled={!commentText.trim()}>
                 <Feather name="send" size={18} color={commentText.trim() ? '#ffffff' : '#9ca3af'} />
               </TouchableOpacity>
             </View>
@@ -133,11 +180,19 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
 
           {/* Comment List */}
           <View style={styles.commentsList}>
-            {MOCK_COMMENTS.map(comment => (
+            {comments.map(comment => (
               <View key={comment.id} style={styles.comment}>
-                <View style={[styles.authorAvatar, styles.smallAvatar]}>
-                  <Text style={styles.authorAvatarText}>{comment.initial}</Text>
-                </View>
+                {comment.profileImageUrl ? (
+                  <Image 
+                    source={{ uri: comment.profileImageUrl }} 
+                    style={styles.smallAvatar} 
+                    contentFit="cover" 
+                  />
+                ) : (
+                  <View style={[styles.authorAvatar, styles.smallAvatar, comment.author === CURRENT_USER.username && {backgroundColor: '#fa477a'}]}>
+                    <Text style={styles.authorAvatarText}>{comment.initial}</Text>
+                  </View>
+                )}
                 <View style={styles.commentContentArea}>
                   <View style={styles.commentHeader}>
                     <Text style={styles.commentAuthor}>{comment.author}</Text>
@@ -145,11 +200,26 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
                   </View>
                   <Text style={styles.commentBody}>{comment.content}</Text>
                   <View style={styles.commentActions}>
-                    <TouchableOpacity style={styles.commentActionBtn}>
-                      <Feather name="arrow-up" size={14} color="#6b7280" />
-                      <Text style={styles.commentActionText}>Upvote</Text>
+                    <TouchableOpacity 
+                      style={styles.commentActionBtn}
+                      onPress={() => handleUpvote(comment.id)}
+                    >
+                      <Feather 
+                        name="arrow-up" 
+                        size={14} 
+                        color={comment.hasUpvoted ? '#fa477a' : '#6b7280'} 
+                      />
+                      <Text style={[
+                        styles.commentActionText, 
+                        comment.hasUpvoted && {color: '#fa477a', fontWeight: '700'}
+                      ]}>
+                        {comment.upvotes} Upvotes
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.commentActionBtn}>
+                    <TouchableOpacity 
+                      style={styles.commentActionBtn}
+                      onPress={() => handleReply(comment.author)}
+                    >
                       <Feather name="message-square" size={14} color="#6b7280" />
                       <Text style={styles.commentActionText}>Reply</Text>
                     </TouchableOpacity>
@@ -330,6 +400,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#1a1a2e',
     minHeight: 40,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   sendBtn: {
     width: 36,
