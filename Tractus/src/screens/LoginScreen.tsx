@@ -14,8 +14,10 @@ import {
 import { Image } from 'expo-image';
 
 export default function LoginScreen() {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -50,25 +52,51 @@ export default function LoginScreen() {
               <View style={styles.inputGroup}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Email address"
+                  placeholder="Username"
                   placeholderTextColor="#aaa"
-                  keyboardType="email-address"
                   autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
+                  value={username}
+                  onChangeText={setUsername}
                 />
               </View>
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email Address"
+                    placeholderTextColor="#aaa"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
+              )}
 
               <View style={styles.inputGroup}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Password"
+                  placeholder="Password (••••••••••••)"
                   placeholderTextColor="#aaa"
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
                 />
               </View>
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirm Password (••••••••••••)"
+                    placeholderTextColor="#aaa"
+                    secureTextEntry
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                  />
+                </View>
+              )}
 
               {isLogin && (
                 <View style={styles.formOptions}>
