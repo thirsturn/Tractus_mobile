@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import { useFonts } from 'expo-font';
 import LoadingScreen from './src/screens/LoadingScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import HomeScreen from './src/screens/HomeScreen';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [fontsLoaded] = useFonts({
     'Urbanist': require('./assets/urbanist.ttf'),
   });
@@ -21,7 +23,11 @@ export default function App() {
 
   return (
     <View style={{ flex: 1 }}>
-      <LoginScreen />
+      {isLoggedIn ? (
+        <HomeScreen />
+      ) : (
+        <LoginScreen onLogin={() => setIsLoggedIn(true)} />
+      )}
       <StatusBar style="auto" />
     </View>
   );
