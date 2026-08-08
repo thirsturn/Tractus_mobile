@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   formTitle: {
+    fontFamily: 'Urbanist',
     fontSize: 36,
     fontWeight: '800',
     color: '#2a067a', // Deep purple
@@ -170,6 +171,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   formSubtitle: {
+    fontFamily: 'Urbanist',
     fontSize: 15,
     color: '#666',
     marginBottom: 30,
@@ -185,6 +187,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     backgroundColor: '#fff',
+    fontFamily: 'Urbanist',
     fontSize: 16,
     color: '#333',
   },
@@ -212,11 +215,13 @@ const styles = StyleSheet.create({
     borderColor: '#2a067a',
   },
   rememberMeText: {
+    fontFamily: 'Urbanist',
     color: '#555',
     fontWeight: '500',
     fontSize: 14,
   },
   forgotPassword: {
+    fontFamily: 'Urbanist',
     color: '#7fbd78', // Soft green
     fontWeight: '600',
     fontSize: 14,
@@ -234,6 +239,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   submitBtnText: {
+    fontFamily: 'Urbanist',
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
@@ -244,10 +250,12 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   toggleText: {
+    fontFamily: 'Urbanist',
     color: '#666',
     fontSize: 15,
   },
   toggleBtn: {
+    fontFamily: 'Urbanist',
     color: '#2a067a', // Deep purple
     fontWeight: '700',
     fontSize: 15,

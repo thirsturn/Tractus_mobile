@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
+    fontFamily: 'Urbanist',
     marginTop: 15,
     fontSize: 16,
     color: '#333333',
