@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Share,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
@@ -60,10 +61,13 @@ const CURRENT_USER = {
 export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsScreenProps) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<ThreadComment[]>(INITIAL_MOCK_COMMENTS);
+  const [thread, setThread] = useState({
+    ...MOCK_THREAD_DETAIL,
+    hasUpvoted: false,
+    hasDownvoted: false,
+    hasReposted: false,
+  });
   const inputRef = useRef<TextInput>(null);
-  
-  // In a real app we'd fetch the thread based on threadId. Using mock for now.
-  const thread = MOCK_THREAD_DETAIL;
 
   const handleAddComment = () => {
     if (!commentText.trim()) return;
@@ -98,6 +102,52 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
       }
       return c;
     }));
+  };
+
+  const handlePostUpvote = () => {
+    setThread(prev => ({
+      ...prev,
+      hasUpvoted: !prev.hasUpvoted,
+      hasDownvoted: false,
+      stats: {
+        ...prev.stats,
+        upvotes: prev.hasUpvoted ? prev.stats.upvotes - 1 : prev.stats.upvotes + 1 + (prev.hasDownvoted ? 1 : 0)
+      }
+    }));
+  };
+
+  const handlePostDownvote = () => {
+    setThread(prev => ({
+      ...prev,
+      hasDownvoted: !prev.hasDownvoted,
+      hasUpvoted: false,
+      stats: {
+        ...prev.stats,
+        upvotes: prev.hasDownvoted ? prev.stats.upvotes + 1 : prev.stats.upvotes - 1 - (prev.hasUpvoted ? 1 : 0)
+      }
+    }));
+  };
+
+  const handleRepost = () => {
+    setThread(prev => ({
+      ...prev,
+      hasReposted: !prev.hasReposted,
+      stats: {
+        ...prev.stats,
+        reposts: prev.hasReposted ? prev.stats.reposts - 1 : prev.stats.reposts + 1
+      }
+    }));
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out this thread on Tractus: "${thread.title}"`,
+        url: `https://tractus.app/thread/${thread.id}` // iOS mostly, Android uses message
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -136,12 +186,18 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
           {/* Statistics Bar */}
           <View style={styles.postStatsBar}>
             <View style={styles.statGroup}>
-              <TouchableOpacity style={[styles.statBtn, styles.statBtnActive]}>
-                <Feather name="arrow-up" size={18} color="#fa477a" />
+              <TouchableOpacity 
+                style={[styles.statBtn, thread.hasUpvoted && styles.statBtnActive]}
+                onPress={handlePostUpvote}
+              >
+                <Feather name="arrow-up" size={18} color={thread.hasUpvoted ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
               <Text style={styles.statCount}>{thread.stats.upvotes}</Text>
-              <TouchableOpacity style={styles.statBtn}>
-                <Feather name="arrow-down" size={18} color="#6b7280" />
+              <TouchableOpacity 
+                style={[styles.statBtn, thread.hasDownvoted && styles.statBtnDownActive]}
+                onPress={handlePostDownvote}
+              >
+                <Feather name="arrow-down" size={18} color={thread.hasDownvoted ? "#3b82f6" : "#6b7280"} />
               </TouchableOpacity>
             </View>
             
@@ -150,12 +206,15 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
               <Text style={styles.actionText}>{thread.stats.comments + (comments.length - INITIAL_MOCK_COMMENTS.length)} Comments</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.actionBtn}>
-              <Feather name="repeat" size={18} color="#6b7280" />
-              <Text style={styles.actionText}>{thread.stats.reposts} Reposts</Text>
+            <TouchableOpacity 
+              style={[styles.actionBtn, thread.hasReposted && styles.statBtnActive]}
+              onPress={handleRepost}
+            >
+              <Feather name="repeat" size={18} color={thread.hasReposted ? "#fa477a" : "#6b7280"} />
+              <Text style={[styles.actionText, thread.hasReposted && {color: '#fa477a'}]}>{thread.stats.reposts} Reposts</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionBtn}>
+            <TouchableOpacity style={styles.actionBtn} onPress={handleShare}>
               <Feather name="share-2" size={18} color="#6b7280" />
               <Text style={styles.actionText}>Share</Text>
             </TouchableOpacity>
@@ -353,6 +412,9 @@ const styles = StyleSheet.create({
   },
   statBtnActive: {
     backgroundColor: 'rgba(250, 71, 122, 0.1)',
+  },
+  statBtnDownActive: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
   },
   statCount: {
     fontFamily: 'Urbanist',
