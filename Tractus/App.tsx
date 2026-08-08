@@ -5,10 +5,12 @@ import { useFonts } from 'expo-font';
 import LoadingScreen from './src/screens/LoadingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import ThreadDetailsScreen from './src/screens/ThreadDetailsScreen';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
   const [fontsLoaded] = useFonts({
     'Urbanist': require('./assets/urbanist.ttf'),
   });
@@ -24,7 +26,14 @@ export default function App() {
   return (
     <View style={{ flex: 1 }}>
       {isLoggedIn ? (
-        <HomeScreen />
+        selectedThreadId ? (
+          <ThreadDetailsScreen 
+            threadId={selectedThreadId} 
+            onBack={() => setSelectedThreadId(null)} 
+          />
+        ) : (
+          <HomeScreen onThreadSelect={setSelectedThreadId} />
+        )
       ) : (
         <LoginScreen onLogin={() => setIsLoggedIn(true)} />
       )}
