@@ -34,7 +34,18 @@ const MOCK_THREAD_DETAIL = {
   }
 };
 
-const INITIAL_MOCK_COMMENTS = [
+interface ThreadComment {
+  id: number;
+  author: string;
+  initial: string;
+  time: string;
+  content: string;
+  upvotes: number;
+  hasUpvoted: boolean;
+  profileImageUrl?: string;
+}
+
+const INITIAL_MOCK_COMMENTS: ThreadComment[] = [
   { id: 101, author: 'CodeNinja', initial: 'C', time: '1 hr ago', content: 'Honestly, I think Elixir is still criminally underrated. The BEAM ecosystem makes building fault-tolerant real-time systems so trivial compared to Node or Go.', upvotes: 24, hasUpvoted: false },
   { id: 102, author: 'DataWizard', initial: 'D', time: '45 mins ago', content: 'Zig is fantastic if you are doing systems programming, but for web backends? It might be overkill. Stick to Go unless you really need that manual memory management.', upvotes: 18, hasUpvoted: false },
   { id: 103, author: 'DesignPro', initial: 'D', time: '20 mins ago', content: 'What about Kotlin? It is huge in mobile but I feel like backend devs sleep on it. Ktor is incredibly nice to use.', upvotes: 5, hasUpvoted: false }
@@ -48,7 +59,7 @@ const CURRENT_USER = {
 
 export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsScreenProps) {
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState(INITIAL_MOCK_COMMENTS);
+  const [comments, setComments] = useState<ThreadComment[]>(INITIAL_MOCK_COMMENTS);
   const inputRef = useRef<TextInput>(null);
   
   // In a real app we'd fetch the thread based on threadId. Using mock for now.
