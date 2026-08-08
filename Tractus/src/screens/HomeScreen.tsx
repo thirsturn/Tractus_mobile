@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import ThreadCard from '../components/ThreadCard';
+import TopNav from '../components/TopNav';
 import type { ThreadResponse } from '../types';
 
 const MOCK_HOME_THREADS: ThreadResponse[] = [
@@ -35,6 +36,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <TopNav />
       <View style={styles.container}>
         <FlatList
           data={threads}
