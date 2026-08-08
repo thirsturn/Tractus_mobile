@@ -13,7 +13,11 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 
-export default function LoginScreen() {
+interface LoginScreenProps {
+  onLogin?: () => void;
+}
+
+export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -114,7 +118,7 @@ export default function LoginScreen() {
                 </View>
               )}
 
-              <TouchableOpacity style={styles.submitBtn}>
+              <TouchableOpacity style={styles.submitBtn} onPress={onLogin}>
                 <Text style={styles.submitBtnText}>
                   {isLogin ? 'Sign In' : 'Sign Up'}
                 </Text>
