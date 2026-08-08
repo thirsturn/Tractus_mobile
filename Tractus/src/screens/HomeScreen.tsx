@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import ThreadCard from '../components/ThreadCard';
 import TopNav from '../components/TopNav';
 import type { ThreadResponse } from '../types';
@@ -28,7 +29,7 @@ export default function HomeScreen() {
         <Text style={styles.headerSubtitle}>Join the discussion</Text>
       </View>
       <TouchableOpacity style={styles.createBtn}>
-        <Text style={[styles.createBtnText, styles.createBtnIconText]}>+</Text>
+        <Feather name="plus" size={18} color="#ffffff" style={styles.createBtnIconText} />
         <Text style={styles.createBtnText}>Create Post</Text>
       </TouchableOpacity>
     </View>
@@ -97,7 +98,6 @@ const styles = StyleSheet.create({
   },
   createBtnIconText: {
     marginRight: 6,
-    fontSize: 18,
   },
   createBtnText: {
     fontFamily: 'Urbanist',

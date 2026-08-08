@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Image } from 'expo-image';
+import { Feather } from '@expo/vector-icons';
 
 export default function TopNav() {
   return (
@@ -17,7 +18,7 @@ export default function TopNav() {
       {/* Actions (Notifications & Profile) */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity style={styles.iconBtn}>
-          <Text style={styles.iconText}>🔔</Text>
+          <Feather name="bell" size={22} color="#1a1a2e" />
           <View style={styles.notificationBadge} />
         </TouchableOpacity>
 
@@ -57,9 +58,6 @@ const styles = StyleSheet.create({
     padding: 8,
     marginRight: 12,
     position: 'relative',
-  },
-  iconText: {
-    fontSize: 20,
   },
   notificationBadge: {
     position: 'absolute',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse } from '../types';
 
 interface ThreadCardProps {
@@ -20,11 +21,11 @@ export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
       {/* Left side: Voting Controls */}
       <View style={styles.votingContainer}>
         <TouchableOpacity style={styles.voteBtn}>
-          <Text style={styles.iconText}>▲</Text>
+          <Feather name="arrow-up" size={20} color="#6b7280" />
         </TouchableOpacity>
         <Text style={styles.voteCount}>{upvotes}</Text>
         <TouchableOpacity style={styles.voteBtn}>
-          <Text style={styles.iconText}>▼</Text>
+          <Feather name="arrow-down" size={20} color="#6b7280" />
         </TouchableOpacity>
       </View>
 
@@ -44,7 +45,7 @@ export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
 
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionBtn}>
-            <Text style={styles.iconText}>💬</Text>
+            <Feather name="message-square" size={16} color="#6b7280" />
             <Text style={styles.actionText}>{commentsCount} Comments</Text>
           </TouchableOpacity>
         </View>
@@ -75,10 +76,6 @@ const styles = StyleSheet.create({
   voteBtn: {
     padding: 4,
     borderRadius: 4,
-  },
-  iconText: {
-    fontSize: 14,
-    color: '#6b7280',
   },
   voteCount: {
     fontFamily: 'Urbanist',
