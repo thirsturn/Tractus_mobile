@@ -12,7 +12,7 @@ import {
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import TopNav from '../components/TopNav';
-import { CURRENT_USER } from '../constants/auth';
+import { useAuth } from '../context/AuthContext';
 
 interface ThreadDetailsScreenProps {
   threadId: number;
@@ -33,6 +33,7 @@ interface ThreadComment {
 }
 
 export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, onThreadSelect }: ThreadDetailsScreenProps) {
+  const { user } = useAuth();
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<ThreadComment[]>([]);
   // TODO: Fetch real thread data by ID from backend
@@ -53,9 +54,9 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
     if (!commentText.trim()) return;
     const newComment = {
       id: Date.now(),
-      author: CURRENT_USER.username,
-      initial: CURRENT_USER.initial,
-      profileImageUrl: CURRENT_USER.profileImageUrl,
+      author: user?.username || 'Guest',
+      initial: user?.username?.charAt(0).toUpperCase() || 'G',
+      profileImageUrl: user?.profileImageUrl,
       time: 'Just now',
       content: commentText.trim(),
       upvotes: 0,
@@ -213,7 +214,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
           {/* Comment Input */}
           <View style={styles.commentInputArea}>
             <Image 
-              source={{ uri: CURRENT_USER.profileImageUrl }} 
+              source={{ uri: user?.profileImageUrl }} 
               style={styles.smallAvatar} 
               contentFit="cover" 
             />
@@ -244,7 +245,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                     contentFit="cover" 
                   />
                 ) : (
-                  <View style={[styles.authorAvatar, styles.smallAvatar, comment.author === CURRENT_USER.username && {backgroundColor: '#fa477a'}]}>
+                  <View style={[styles.authorAvatar, styles.smallAvatar, comment.author === user?.username && {backgroundColor: '#fa477a'}]}>
                     <Text style={styles.authorAvatarText}>{comment.initial}</Text>
                   </View>
                 )}

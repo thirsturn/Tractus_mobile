@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, FlatList, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
-import { CURRENT_USER } from '../constants/auth';
+import { useAuth } from '../context/AuthContext';
 
 interface TopNavProps {
   onUserSelect?: (username: string) => void;
@@ -13,6 +13,7 @@ interface TopNavProps {
 const INITIAL_NOTIFICATIONS: { id: number; type: string; user: string; action: string; time: string; read: boolean; threadId: number }[] = [];
 
 export default function TopNav({ onUserSelect, onThreadSelect }: TopNavProps) {
+  const { user, logout } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
@@ -68,11 +69,11 @@ export default function TopNav({ onUserSelect, onThreadSelect }: TopNavProps) {
           {unreadCount > 0 && <View style={styles.notificationBadge} />}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.profileBtn} onPress={() => onUserSelect && onUserSelect(CURRENT_USER.username)}>
-          {CURRENT_USER.profileImageUrl ? (
-            <Image source={{ uri: CURRENT_USER.profileImageUrl }} style={styles.profileImage} contentFit="cover" />
+        <TouchableOpacity style={styles.profileBtn} onPress={() => onUserSelect && user && onUserSelect(user.username)}>
+          {user?.profileImageUrl ? (
+            <Image source={{ uri: user.profileImageUrl }} style={styles.profileImage} contentFit="cover" />
           ) : (
-            <Text style={styles.profileText}>{CURRENT_USER.initial}</Text>
+            <Text style={styles.profileText}>{user?.username?.charAt(0).toUpperCase() || 'U'}</Text>
           )}
         </TouchableOpacity>
       </View>

@@ -20,6 +20,7 @@ import type { ThreadResponse } from '../types';
 
 import threadService from '../services/thread.service';
 import imageService from '../services/image.service';
+import { useAuth } from '../context/AuthContext';
 
 interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
@@ -27,6 +28,7 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenProps) {
+  const { user } = useAuth();
   const [threads, setThreads] = useState<ThreadResponse[]>([]);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -96,7 +98,7 @@ export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenP
         content: newContent,
         imageUrl: imagePreview || undefined,
         spaceId: 1,
-        author: { id: 99, username: 'AlexDev', email: 'alex@tractus.app' }
+        author: { id: user?.id || 0, username: user?.username || 'You', email: user?.email || '' }
       };
       setThreads([newThread, ...threads]);
       setNewTitle('');

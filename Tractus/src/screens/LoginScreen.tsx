@@ -12,18 +12,53 @@ import {
   Keyboard,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginScreenProps {
   onLogin?: () => void;
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
+  const { login, register } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setError(null);
+    if (!username.trim() || !password.trim()) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (!isLogin && password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      if (isLogin) {
+        await login(username.trim(), password);
+      } else {
+        if (!email.trim()) {
+          setError('Email is required for registration.');
+          setIsSubmitting(false);
+          return;
+        }
+        await register(username.trim(), email.trim(), password);
+      }
+      onLogin?.();
+    } catch (err: any) {
+      setError(isLogin ? 'Invalid username or password.' : 'Registration failed. Username may already exist.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -118,9 +153,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 </View>
               )}
 
-              <TouchableOpacity style={styles.submitBtn} onPress={onLogin}>
+              {error && (
+                <Text style={styles.errorText}>{error}</Text>
+              )}
+
+              <TouchableOpacity style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={isSubmitting}>
                 <Text style={styles.submitBtnText}>
-                  {isLogin ? 'Sign In' : 'Sign Up'}
+                  {isSubmitting ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
                 </Text>
               </TouchableOpacity>
 
@@ -229,6 +268,14 @@ const styles = StyleSheet.create({
     color: '#7fbd78', // Soft green
     fontWeight: '600',
     fontSize: 14,
+  },
+  errorText: {
+    fontFamily: 'Urbanist',
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   submitBtn: {
     backgroundColor: '#fa477a', // Vibrant pink
