@@ -6,11 +6,13 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ThreadDetailsScreen from './src/screens/ThreadDetailsScreen';
+import UserProfileScreen from './src/screens/UserProfileScreen';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
+  const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [fontsLoaded] = useFonts({
     'Urbanist': require('./assets/urbanist.ttf'),
   });
@@ -26,13 +28,24 @@ export default function App() {
   return (
     <View style={{ flex: 1 }}>
       {isLoggedIn ? (
-        selectedThreadId ? (
+        selectedUsername ? (
+          <UserProfileScreen 
+            username={selectedUsername} 
+            onBack={() => setSelectedUsername(null)}
+            onThreadSelect={setSelectedThreadId}
+            onUserSelect={setSelectedUsername}
+          />
+        ) : selectedThreadId ? (
           <ThreadDetailsScreen 
             threadId={selectedThreadId} 
             onBack={() => setSelectedThreadId(null)} 
+            onUserSelect={setSelectedUsername}
           />
         ) : (
-          <HomeScreen onThreadSelect={setSelectedThreadId} />
+          <HomeScreen 
+            onThreadSelect={setSelectedThreadId} 
+            onUserSelect={setSelectedUsername}
+          />
         )
       ) : (
         <LoginScreen onLogin={() => setIsLoggedIn(true)} />
