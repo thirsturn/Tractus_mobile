@@ -16,8 +16,6 @@ import userService from '../services/user.service';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 
-const MOCK_USER_POSTS: ThreadResponse[] = [];
-
 export interface UserProfileScreenProps {
   username: string;
   onBack: () => void;

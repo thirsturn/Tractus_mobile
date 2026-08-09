@@ -21,8 +21,6 @@ import type { ThreadResponse } from '../types';
 import threadService from '../services/thread.service';
 import imageService from '../services/image.service';
 
-const MOCK_HOME_THREADS: ThreadResponse[] = [];
-
 interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
   onUserSelect?: (username: string) => void;
