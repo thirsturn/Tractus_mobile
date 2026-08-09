@@ -87,7 +87,7 @@ export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenP
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopNav />
+      <TopNav onUserSelect={onUserSelect} />
       <View style={styles.container}>
         <FlatList
           data={threads}

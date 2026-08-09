@@ -12,6 +12,7 @@ import {
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import TopNav from '../components/TopNav';
+import { CURRENT_USER } from '../constants/auth';
 
 interface ThreadDetailsScreenProps {
   threadId: number;
@@ -52,12 +53,6 @@ const INITIAL_MOCK_COMMENTS: ThreadComment[] = [
   { id: 102, author: 'DataWizard', initial: 'D', time: '45 mins ago', content: 'Zig is fantastic if you are doing systems programming, but for web backends? It might be overkill. Stick to Go unless you really need that manual memory management.', upvotes: 18, hasUpvoted: false },
   { id: 103, author: 'DesignPro', initial: 'D', time: '20 mins ago', content: 'What about Kotlin? It is huge in mobile but I feel like backend devs sleep on it. Ktor is incredibly nice to use.', upvotes: 5, hasUpvoted: false }
 ];
-
-const CURRENT_USER = {
-  username: 'AlexDev',
-  initial: 'A',
-  profileImageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', // Realistic mock avatar
-};
 
 export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect }: ThreadDetailsScreenProps) {
   const [commentText, setCommentText] = useState('');
@@ -153,7 +148,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect }: 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopNav />
+      <TopNav onUserSelect={onUserSelect} />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         
         {/* Navigation Bar */}

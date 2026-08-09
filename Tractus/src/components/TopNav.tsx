@@ -2,8 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
+import { CURRENT_USER } from '../constants/auth';
 
-export default function TopNav() {
+interface TopNavProps {
+  onUserSelect?: (username: string) => void;
+}
+
+export default function TopNav({ onUserSelect }: TopNavProps) {
   return (
     <View style={styles.container}>
       {/* Brand / Logo */}
@@ -22,8 +27,12 @@ export default function TopNav() {
           <View style={styles.notificationBadge} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.profileBtn}>
-          <Text style={styles.profileText}>U</Text>
+        <TouchableOpacity style={styles.profileBtn} onPress={() => onUserSelect && onUserSelect(CURRENT_USER.username)}>
+          {CURRENT_USER.profileImageUrl ? (
+            <Image source={{ uri: CURRENT_USER.profileImageUrl }} style={styles.profileImage} contentFit="cover" />
+          ) : (
+            <Text style={styles.profileText}>{CURRENT_USER.initial}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -83,5 +92,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist',
     fontWeight: '700',
     fontSize: 14,
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
   },
 });
