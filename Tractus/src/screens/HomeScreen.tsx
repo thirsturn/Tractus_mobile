@@ -6,6 +6,10 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import ThreadCard from '../components/ThreadCard';
@@ -25,6 +29,27 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>(MOCK_HOME_THREADS);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newContent, setNewContent] = useState('');
+
+  const handleCreatePost = () => {
+    if (!newTitle.trim()) return;
+    const newThread: ThreadResponse = {
+      id: Date.now(),
+      title: newTitle.trim(),
+      spaceId: 1,
+      author: {
+        id: 99,
+        username: 'AlexDev',
+        email: 'alex@tractus.app'
+      }
+    };
+    setThreads([newThread, ...threads]);
+    setNewTitle('');
+    setNewContent('');
+    setIsCreateModalVisible(false);
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -32,7 +57,7 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
         <Text style={styles.headerTitle}>Home Feed</Text>
         <Text style={styles.headerSubtitle}>Join the discussion</Text>
       </View>
-      <TouchableOpacity style={styles.createBtn}>
+      <TouchableOpacity style={styles.createBtn} onPress={() => setIsCreateModalVisible(true)}>
         <Feather name="plus" size={18} color="#ffffff" style={styles.createBtnIconText} />
         <Text style={styles.createBtnText}>Create Post</Text>
       </TouchableOpacity>
@@ -57,6 +82,47 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
           showsVerticalScrollIndicator={false}
         />
       </View>
+
+      {/* Create Post Modal */}
+      <Modal visible={isCreateModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalContainer}
+        >
+          <SafeAreaView style={styles.modalSafeArea}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setIsCreateModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>New Post</Text>
+              <TouchableOpacity 
+                disabled={!newTitle.trim()} 
+                onPress={handleCreatePost}
+              >
+                <Text style={[styles.modalPostText, !newTitle.trim() && styles.modalPostDisabled]}>Post</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <TextInput
+                style={styles.inputTitle}
+                placeholder="Thread Title"
+                placeholderTextColor="#9ca3af"
+                value={newTitle}
+                onChangeText={setNewTitle}
+              />
+              <TextInput
+                style={styles.inputContent}
+                placeholder="What's on your mind? (Optional)"
+                placeholderTextColor="#9ca3af"
+                multiline
+                value={newContent}
+                onChangeText={setNewContent}
+                autoFocus
+              />
+            </View>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -113,5 +179,63 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
+  },
+  
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  modalSafeArea: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  modalCancelText: {
+    fontFamily: 'Urbanist',
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  modalTitle: {
+    fontFamily: 'Urbanist',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1a1a2e',
+  },
+  modalPostText: {
+    fontFamily: 'Urbanist',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fa477a',
+  },
+  modalPostDisabled: {
+    color: '#fca5a5',
+  },
+  modalBody: {
+    flex: 1,
+    padding: 20,
+  },
+  inputTitle: {
+    fontFamily: 'Urbanist',
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1a1a2e',
+    marginBottom: 20,
+  },
+  inputContent: {
+    flex: 1,
+    fontFamily: 'Urbanist',
+    fontSize: 16,
+    color: '#374151',
+    textAlignVertical: 'top',
+    lineHeight: 24,
   },
 });
