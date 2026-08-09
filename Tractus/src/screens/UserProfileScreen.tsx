@@ -9,31 +9,27 @@ import {
   TextInput,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import type { ThreadResponse } from '../types';
+import type { ThreadResponse, User } from '../types';
 import ThreadCard from '../components/ThreadCard';
 import { CURRENT_USER } from '../constants/auth';
+import userService from '../services/user.service';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 
-interface UserProfileScreenProps {
-  username: string;
-  onBack: () => void;
-  onThreadSelect?: (id: number) => void;
-  onUserSelect?: (username: string) => void;
-}
-
-const MOCK_USER_POSTS: ThreadResponse[] = [
-  { id: 301, title: 'My experience building a full-stack app with Spring Boot and React', spaceId: 1, author: { id: 1, username: 'user', email: 'user@test.com' } },
-  { id: 302, title: 'Best VS Code extensions for Java developers in 2026', spaceId: 2, author: { id: 1, username: 'user', email: 'user@test.com' } },
-  { id: 303, title: 'How I improved my API response times by 300%', spaceId: 1, author: { id: 1, username: 'user', email: 'user@test.com' } },
-];
+const MOCK_USER_POSTS: ThreadResponse[] = [];
 
 export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect }: UserProfileScreenProps) {
   const isOwnProfile = username === CURRENT_USER.username;
   
-  const [bio, setBio] = useState('Passionate developer and community contributor.');
-  const [location, setLocation] = useState('San Francisco, CA');
-  const [website, setWebsite] = useState('https://tractus.dev');
+  const [profileUser, setProfileUser] = useState<User | null>(null);
+  const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
+  const [website, setWebsite] = useState('');
   
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [editBio, setEditBio] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editWebsite, setEditWebsite] = useState('');
@@ -41,10 +37,25 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
   const [editPassword, setEditPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const userPosts = MOCK_USER_POSTS.map(post => ({
-    ...post,
-    author: { ...post.author, username: username }
-  }));
+  const [userPosts, setUserPosts] = useState<ThreadResponse[]>([]);
+
+  React.useEffect(() => {
+    loadProfile();
+  }, [username]);
+
+  const loadProfile = async () => {
+    try {
+      const data = await userService.getUserByUsername(username);
+      setProfileUser(data);
+      setBio(data.bio || '');
+      setLocation(data.location || '');
+      setWebsite(data.website || '');
+      // In a real app we'd fetch user's posts here too
+    } catch (err) {
+      console.error("Failed to load profile:", err);
+      // Fallback to initial state
+    }
+  };
 
   const startEditing = () => {
     setEditBio(bio);
@@ -56,19 +67,57 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
     setIsEditing(true);
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     setError(null);
+    if (!profileUser) return;
+    
     if (editPassword && !editCurrentPassword) {
       setError('Please enter your current password to set a new password.');
       return;
     }
     
-    // In a real app we would call the backend here, validate password, etc.
-    // For now we just mock a successful update
-    setBio(editBio);
-    setLocation(editLocation);
-    setWebsite(editWebsite);
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      const updatedUser = await userService.updateUser(profileUser.id, {
+        bio: editBio,
+        location: editLocation,
+        website: editWebsite,
+        currentPassword: editCurrentPassword,
+        password: editPassword,
+      });
+      setProfileUser(updatedUser);
+      setBio(updatedUser.bio || '');
+      setLocation(updatedUser.location || '');
+      setWebsite(updatedUser.website || '');
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to update profile", err);
+      setError("Failed to update profile. Check current password.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const pickAvatar = async () => {
+    if (!profileUser) return;
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      setIsUploadingAvatar(true);
+      try {
+        const updatedUser = await userService.uploadAvatar(profileUser.id, result.assets[0].uri);
+        setProfileUser(updatedUser);
+      } catch (err) {
+        console.error("Failed to upload avatar", err);
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    }
   };
 
   const cancelEditing = () => {
@@ -82,8 +131,21 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
       <View style={styles.headerContent}>
         <View style={styles.avatarWrapper}>
           <View style={styles.avatarLarge}>
-            <Text style={styles.avatarTextLarge}>{username.charAt(0).toUpperCase()}</Text>
+            {profileUser?.profileImageUrl ? (
+              <Image source={{ uri: profileUser.profileImageUrl }} style={{ width: '100%', height: '100%', borderRadius: 40 }} contentFit="cover" />
+            ) : (
+              <Text style={styles.avatarTextLarge}>{username.charAt(0).toUpperCase()}</Text>
+            )}
           </View>
+          {isOwnProfile && isEditing && (
+            <TouchableOpacity 
+              style={[styles.avatarUploadBtn, isUploadingAvatar && { opacity: 0.5 }]} 
+              onPress={pickAvatar}
+              disabled={isUploadingAvatar}
+            >
+              <Feather name="camera" size={16} color="#ffffff" />
+            </TouchableOpacity>
+          )}
         </View>
         
         <View style={styles.nameRow}>
@@ -96,9 +158,9 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
           )}
           {isOwnProfile && isEditing && (
             <View style={styles.editActionsRow}>
-              <TouchableOpacity style={styles.saveBtn} onPress={saveProfile}>
+              <TouchableOpacity style={styles.saveBtn} onPress={saveProfile} disabled={isSaving}>
                 <Feather name="save" size={14} color="#ffffff" />
-                <Text style={styles.saveBtnText}>Save</Text>
+                <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.cancelBtn} onPress={cancelEditing}>
                 <Feather name="x" size={14} color="#6b7280" />
@@ -306,6 +368,19 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 32,
     fontWeight: 'bold',
+  },
+  avatarUploadBtn: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#fa477a',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
   nameRow: {
     flexDirection: 'row',
