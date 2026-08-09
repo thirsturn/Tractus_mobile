@@ -27,9 +27,10 @@ const MOCK_HOME_THREADS: ThreadResponse[] = [
 
 interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
+  onUserSelect?: (username: string) => void;
 }
 
-export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
+export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>(MOCK_HOME_THREADS);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -86,7 +87,7 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopNav />
+      <TopNav onUserSelect={onUserSelect} />
       <View style={styles.container}>
         <FlatList
           data={threads}
@@ -94,7 +95,8 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
           renderItem={({ item }) => (
             <ThreadCard 
               thread={item} 
-              onPress={() => onThreadSelect && onThreadSelect(item.id)} 
+              onPress={() => onThreadSelect && onThreadSelect(item.id)}
+              onUserSelect={onUserSelect}
             />
           )}
           ListHeaderComponent={renderHeader}

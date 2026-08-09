@@ -6,9 +6,10 @@ import type { ThreadResponse } from '../types';
 interface ThreadCardProps {
   thread: ThreadResponse;
   onPress?: () => void;
+  onUserSelect?: (username: string) => void;
 }
 
-export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
+export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCardProps) {
   const upvotes = Math.floor(Math.random() * 50);
   const commentsCount = Math.floor(Math.random() * 20);
 
@@ -22,12 +23,17 @@ export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
       {/* Main Content Area */}
       <View style={styles.contentContainer}>
         <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {thread.author.username.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.authorName}>{thread.author.username}</Text>
+          <TouchableOpacity 
+            style={{ flexDirection: 'row', alignItems: 'center' }}
+            onPress={() => onUserSelect && onUserSelect(thread.author.username)}
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {thread.author.username.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <Text style={styles.authorName}>{thread.author.username}</Text>
+          </TouchableOpacity>
           <Text style={styles.metaText}>• Just now</Text>
         </View>
 

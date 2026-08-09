@@ -12,10 +12,12 @@ import {
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import TopNav from '../components/TopNav';
+import { CURRENT_USER } from '../constants/auth';
 
 interface ThreadDetailsScreenProps {
   threadId: number;
   onBack: () => void;
+  onUserSelect?: (username: string) => void;
 }
 
 // Highly Realistic Mock Data from web app
@@ -52,13 +54,7 @@ const INITIAL_MOCK_COMMENTS: ThreadComment[] = [
   { id: 103, author: 'DesignPro', initial: 'D', time: '20 mins ago', content: 'What about Kotlin? It is huge in mobile but I feel like backend devs sleep on it. Ktor is incredibly nice to use.', upvotes: 5, hasUpvoted: false }
 ];
 
-const CURRENT_USER = {
-  username: 'AlexDev',
-  initial: 'A',
-  profileImageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop', // Realistic mock avatar
-};
-
-export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsScreenProps) {
+export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect }: ThreadDetailsScreenProps) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<ThreadComment[]>(INITIAL_MOCK_COMMENTS);
   const [thread, setThread] = useState({
@@ -152,7 +148,7 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopNav />
+      <TopNav onUserSelect={onUserSelect} />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         
         {/* Navigation Bar */}
@@ -164,13 +160,18 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
         {/* Main Thread Content */}
         <View style={styles.mainPost}>
           <View style={styles.postHeader}>
-            <View style={styles.authorAvatar}>
-              <Text style={styles.authorAvatarText}>{thread.author.initial}</Text>
-            </View>
-            <View style={styles.postMeta}>
-              <Text style={styles.authorName}>{thread.author.username}</Text>
-              <Text style={styles.timePosted}>{thread.time}</Text>
-            </View>
+            <TouchableOpacity 
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              onPress={() => onUserSelect && onUserSelect(thread.author.username)}
+            >
+              <View style={styles.authorAvatar}>
+                <Text style={styles.authorAvatarText}>{thread.author.initial}</Text>
+              </View>
+              <View style={styles.postMeta}>
+                <Text style={styles.authorName}>{thread.author.username}</Text>
+                <Text style={styles.timePosted}>{thread.time}</Text>
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.moreBtn}>
               <Feather name="more-horizontal" size={20} color="#6b7280" />
             </TouchableOpacity>
@@ -265,7 +266,9 @@ export default function ThreadDetailsScreen({ threadId, onBack }: ThreadDetailsS
                 )}
                 <View style={styles.commentContentArea}>
                   <View style={styles.commentHeader}>
-                    <Text style={styles.commentAuthor}>{comment.author}</Text>
+                    <TouchableOpacity onPress={() => onUserSelect && onUserSelect(comment.author)}>
+                      <Text style={styles.commentAuthor}>{comment.author}</Text>
+                    </TouchableOpacity>
                     <Text style={styles.commentTime}>{comment.time}</Text>
                   </View>
                   <Text style={styles.commentBody}>{comment.content}</Text>
