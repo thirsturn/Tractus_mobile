@@ -18,12 +18,8 @@ import ThreadCard from '../components/ThreadCard';
 import TopNav from '../components/TopNav';
 import type { ThreadResponse } from '../types';
 
-const MOCK_HOME_THREADS: ThreadResponse[] = [
-  { id: 201, title: 'Welcome to Tractus! Introduce yourself here 👋', spaceId: 1, author: { id: 10, username: 'CommunityManager', email: 'cm@test.com' } },
-  { id: 202, title: 'What are you working on this weekend?', spaceId: 1, author: { id: 11, username: 'WeekendWarrior', email: 'ww@test.com' } },
-  { id: 203, title: 'Tips for transitioning from frontend to full-stack?', spaceId: 1, author: { id: 12, username: 'ReactDev123', email: 'react@test.com' } },
-  { id: 204, title: 'Has anyone tried the new Vite build tools?', spaceId: 1, author: { id: 13, username: 'SpeedCoder', email: 'speed@test.com' } }
-];
+import threadService from '../services/thread.service';
+import imageService from '../services/image.service';
 
 interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
@@ -31,11 +27,26 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenProps) {
-  const [threads, setThreads] = useState<ThreadResponse[]>(MOCK_HOME_THREADS);
+  const [threads, setThreads] = useState<ThreadResponse[]>([]);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    loadThreads();
+  }, []);
+
+  const loadThreads = async () => {
+    try {
+      const data = await threadService.getThreadsBySpace(1);
+      // Sort newest first assuming backend might not sort
+      setThreads(data.sort((a, b) => b.id - a.id));
+    } catch (err) {
+      console.error("Failed to load threads:", err);
+    }
+  };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -53,23 +64,48 @@ export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenP
     setImagePreview(null);
   };
 
-  const handleCreatePost = () => {
+  const handleCreatePost = async () => {
     if (!newTitle.trim()) return;
-    const newThread: ThreadResponse = {
-      id: Date.now(),
-      title: newTitle.trim(),
-      spaceId: 1,
-      author: {
-        id: 99,
-        username: 'AlexDev',
-        email: 'alex@tractus.app'
+    setIsSubmitting(true);
+    
+    try {
+      let imageUrl = undefined;
+      if (imagePreview) {
+        const result = await imageService.uploadImage(imagePreview);
+        imageUrl = result.url;
       }
-    };
-    setThreads([newThread, ...threads]);
-    setNewTitle('');
-    setNewContent('');
-    setImagePreview(null);
-    setIsCreateModalVisible(false);
+      
+      await threadService.createThread({
+        title: newTitle.trim(),
+        content: newContent,
+        spaceId: 1,
+        imageUrl,
+      });
+      
+      setNewTitle('');
+      setNewContent('');
+      setImagePreview(null);
+      setIsCreateModalVisible(false);
+      loadThreads(); // Refresh the feed
+    } catch (err) {
+      console.error("Failed to create post", err);
+      // Fallback local update if backend error
+      const newThread: ThreadResponse = {
+        id: Date.now(),
+        title: newTitle.trim(),
+        content: newContent,
+        imageUrl: imagePreview || undefined,
+        spaceId: 1,
+        author: { id: 99, username: 'AlexDev', email: 'alex@tractus.app' }
+      };
+      setThreads([newThread, ...threads]);
+      setNewTitle('');
+      setNewContent('');
+      setImagePreview(null);
+      setIsCreateModalVisible(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderHeader = () => (
@@ -118,10 +154,12 @@ export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenP
               </TouchableOpacity>
               <Text style={styles.modalTitle}>New Post</Text>
               <TouchableOpacity 
-                disabled={!newTitle.trim()} 
+                disabled={!newTitle.trim() || isSubmitting} 
                 onPress={handleCreatePost}
               >
-                <Text style={[styles.modalPostText, !newTitle.trim() && styles.modalPostDisabled]}>Post</Text>
+                <Text style={[styles.modalPostText, (!newTitle.trim() || isSubmitting) && styles.modalPostDisabled]}>
+                  {isSubmitting ? 'Posting...' : 'Post'}
+                </Text>
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
