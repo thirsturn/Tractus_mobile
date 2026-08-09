@@ -11,6 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import ThreadCard from '../components/ThreadCard';
 import TopNav from '../components/TopNav';
@@ -32,6 +34,23 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImagePreview(result.assets[0].uri);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+  };
 
   const handleCreatePost = () => {
     if (!newTitle.trim()) return;
@@ -48,6 +67,7 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
     setThreads([newThread, ...threads]);
     setNewTitle('');
     setNewContent('');
+    setImagePreview(null);
     setIsCreateModalVisible(false);
   };
 
@@ -119,6 +139,22 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
                 onChangeText={setNewContent}
                 autoFocus
               />
+              
+              <View style={styles.imageSection}>
+                {!imagePreview ? (
+                  <TouchableOpacity style={styles.addImageBtn} onPress={pickImage}>
+                    <Feather name="image" size={18} color="#fa477a" style={{ marginRight: 8 }} />
+                    <Text style={styles.addImageText}>Attach an Image</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: imagePreview }} style={styles.imagePreview} contentFit="cover" />
+                    <TouchableOpacity style={styles.removeImageBtn} onPress={removeImage}>
+                      <Feather name="x" size={16} color="#ffffff" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
@@ -237,5 +273,48 @@ const styles = StyleSheet.create({
     color: '#374151',
     textAlignVertical: 'top',
     lineHeight: 24,
+    marginBottom: 20,
+  },
+  imageSection: {
+    marginTop: 10,
+  },
+  addImageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(250, 71, 122, 0.08)',
+    alignSelf: 'flex-start',
+  },
+  addImageText: {
+    fontFamily: 'Urbanist',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fa477a',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
