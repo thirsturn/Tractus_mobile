@@ -18,6 +18,13 @@ import { Image } from 'expo-image';
 
 const MOCK_USER_POSTS: ThreadResponse[] = [];
 
+export interface UserProfileScreenProps {
+  username: string;
+  onBack: () => void;
+  onThreadSelect?: (id: number) => void;
+  onUserSelect?: (username: string) => void;
+}
+
 export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect }: UserProfileScreenProps) {
   const isOwnProfile = username === CURRENT_USER.username;
   
