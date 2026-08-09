@@ -18,6 +18,7 @@ interface ThreadDetailsScreenProps {
   threadId: number;
   onBack: () => void;
   onUserSelect?: (username: string) => void;
+  onThreadSelect?: (id: number) => void;
 }
 
 // Highly Realistic Mock Data from web app
@@ -54,7 +55,7 @@ const INITIAL_MOCK_COMMENTS: ThreadComment[] = [
   { id: 103, author: 'DesignPro', initial: 'D', time: '20 mins ago', content: 'What about Kotlin? It is huge in mobile but I feel like backend devs sleep on it. Ktor is incredibly nice to use.', upvotes: 5, hasUpvoted: false }
 ];
 
-export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect }: ThreadDetailsScreenProps) {
+export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, onThreadSelect }: ThreadDetailsScreenProps) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<ThreadComment[]>(INITIAL_MOCK_COMMENTS);
   const [thread, setThread] = useState({
@@ -148,7 +149,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect }: 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopNav onUserSelect={onUserSelect} />
+      <TopNav onUserSelect={onUserSelect} onThreadSelect={onThreadSelect} />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         
         {/* Navigation Bar */}

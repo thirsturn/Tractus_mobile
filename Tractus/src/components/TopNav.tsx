@@ -1,14 +1,58 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, FlatList, TouchableWithoutFeedback } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { CURRENT_USER } from '../constants/auth';
 
 interface TopNavProps {
   onUserSelect?: (username: string) => void;
+  onThreadSelect?: (id: number) => void;
 }
 
-export default function TopNav({ onUserSelect }: TopNavProps) {
+const INITIAL_NOTIFICATIONS = [
+  { id: 1, type: 'upvote', user: 'Alex', action: 'upvoted your post', time: '5m ago', read: false, threadId: 1 },
+  { id: 2, type: 'comment', user: 'Sarah', action: 'commented on your thread', time: '1h ago', read: false, threadId: 101 },
+  { id: 3, type: 'mention', user: 'DevTeam', action: 'mentioned you in an announcement', time: '2h ago', read: true, threadId: 102 }
+];
+
+export default function TopNav({ onUserSelect, onThreadSelect }: TopNavProps) {
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  };
+
+  const handleNotificationPress = (threadId: number) => {
+    setIsNotificationsOpen(false);
+    if (onThreadSelect) {
+      onThreadSelect(threadId);
+    }
+  };
+
+  const renderNotification = ({ item }: { item: typeof INITIAL_NOTIFICATIONS[0] }) => (
+    <TouchableOpacity 
+      style={[styles.notificationItem, !item.read && styles.notificationItemUnread]}
+      onPress={() => handleNotificationPress(item.threadId)}
+    >
+      <View style={styles.notificationIconContainer}>
+        {item.type === 'upvote' && <Feather name="heart" size={16} color="#fa477a" />}
+        {item.type === 'comment' && <Feather name="message-square" size={16} color="#3b82f6" />}
+        {item.type === 'mention' && <Feather name="at-sign" size={16} color="#7fbd78" />}
+      </View>
+      <View style={styles.notificationContent}>
+        <Text style={styles.notificationText}>
+          <Text style={styles.notificationUser}>{item.user} </Text>
+          {item.action}
+        </Text>
+        <Text style={styles.notificationTime}>{item.time}</Text>
+      </View>
+      {!item.read && <View style={styles.unreadDot} />}
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       {/* Brand / Logo */}
@@ -22,9 +66,9 @@ export default function TopNav({ onUserSelect }: TopNavProps) {
 
       {/* Actions (Notifications & Profile) */}
       <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.iconBtn}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => setIsNotificationsOpen(true)}>
           <Feather name="bell" size={22} color="#1a1a2e" />
-          <View style={styles.notificationBadge} />
+          {unreadCount > 0 && <View style={styles.notificationBadge} />}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.profileBtn} onPress={() => onUserSelect && onUserSelect(CURRENT_USER.username)}>
@@ -35,6 +79,45 @@ export default function TopNav({ onUserSelect }: TopNavProps) {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Notifications Modal Overlay */}
+      <Modal
+        visible={isNotificationsOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsNotificationsOpen(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setIsNotificationsOpen(false)}
+        >
+          <TouchableWithoutFeedback>
+            <View style={styles.notificationsDropdown}>
+              <View style={styles.notificationsHeader}>
+                <Text style={styles.notificationsTitle}>Notifications</Text>
+                {unreadCount > 0 && (
+                  <TouchableOpacity style={styles.markReadBtn} onPress={markAllAsRead}>
+                    <Feather name="check" size={14} color="#fa477a" />
+                    <Text style={styles.markReadText}>Mark all read</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <FlatList
+                data={notifications}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderNotification}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>You're all caught up!</Text>
+                  </View>
+                }
+              />
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -46,11 +129,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    // Add top padding to lower the navbar, accounting for the status bar on Android
     paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 12 : 20,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
+    zIndex: 10,
   },
   brandContainer: {
     justifyContent: 'center',
@@ -75,7 +158,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#fa477a', // Vibrant pink for badge
+    backgroundColor: '#fa477a',
     borderWidth: 1,
     borderColor: '#ffffff',
   },
@@ -83,7 +166,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#2a067a', // Deep purple
+    backgroundColor: '#2a067a',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -97,5 +180,107 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 16,
+  },
+  
+  // Notification Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  notificationsDropdown: {
+    position: 'absolute',
+    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 60 : 70,
+    right: 20,
+    width: 320,
+    maxHeight: 400,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  notificationsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  notificationsTitle: {
+    fontFamily: 'Urbanist',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1a1a2e',
+  },
+  markReadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  markReadText: {
+    fontFamily: 'Urbanist',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fa477a',
+    marginLeft: 4,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  notificationItemUnread: {
+    backgroundColor: '#fff1f2', // very light pink bg for unread
+  },
+  notificationIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f9fafb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationText: {
+    fontFamily: 'Urbanist',
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+  },
+  notificationUser: {
+    fontWeight: '700',
+    color: '#1a1a2e',
+  },
+  notificationTime: {
+    fontFamily: 'Urbanist',
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 2,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fa477a',
+    marginLeft: 12,
+  },
+  emptyContainer: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: 'Urbanist',
+    fontSize: 14,
+    color: '#6b7280',
   },
 });

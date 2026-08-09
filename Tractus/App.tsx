@@ -40,6 +40,7 @@ export default function App() {
             threadId={selectedThreadId} 
             onBack={() => setSelectedThreadId(null)} 
             onUserSelect={setSelectedUsername}
+            onThreadSelect={setSelectedThreadId}
           />
         ) : (
           <HomeScreen 
