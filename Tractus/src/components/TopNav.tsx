@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, FlatList, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, FlatList, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { CURRENT_USER } from '../constants/auth';
@@ -83,40 +83,38 @@ export default function TopNav({ onUserSelect, onThreadSelect }: TopNavProps) {
       {/* Notifications Modal Overlay */}
       <Modal
         visible={isNotificationsOpen}
-        transparent={true}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setIsNotificationsOpen(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={() => setIsNotificationsOpen(false)}
-        >
-          <TouchableWithoutFeedback>
-            <View style={styles.notificationsDropdown}>
-              <View style={styles.notificationsHeader}>
+        <SafeAreaView style={styles.modalSafeArea}>
+          <View style={styles.notificationsDropdown}>
+            <View style={styles.notificationsHeader}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity onPress={() => setIsNotificationsOpen(false)} style={styles.closeBtn}>
+                  <Feather name="x" size={24} color="#1a1a2e" />
+                </TouchableOpacity>
                 <Text style={styles.notificationsTitle}>Notifications</Text>
-                {unreadCount > 0 && (
-                  <TouchableOpacity style={styles.markReadBtn} onPress={markAllAsRead}>
-                    <Feather name="check" size={14} color="#fa477a" />
-                    <Text style={styles.markReadText}>Mark all read</Text>
-                  </TouchableOpacity>
-                )}
               </View>
-
-              <FlatList
-                data={notifications}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={renderNotification}
-                ListEmptyComponent={
-                  <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>You're all caught up!</Text>
-                  </View>
-                }
-              />
+              {unreadCount > 0 && (
+                <TouchableOpacity style={styles.markReadBtn} onPress={markAllAsRead}>
+                  <Feather name="check" size={14} color="#fa477a" />
+                  <Text style={styles.markReadText}>Mark all read</Text>
+                </TouchableOpacity>
+              )}
             </View>
-          </TouchableWithoutFeedback>
-        </TouchableOpacity>
+
+            <FlatList
+              data={notifications}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderNotification}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>You're all caught up!</Text>
+                </View>
+              }
+            />
+          </View>
+        </SafeAreaView>
       </Modal>
     </View>
   );
@@ -183,24 +181,20 @@ const styles = StyleSheet.create({
   },
   
   // Notification Modal Styles
-  modalOverlay: {
+  modalSafeArea: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: '#ffffff',
   },
   notificationsDropdown: {
-    position: 'absolute',
-    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 60 : 70,
-    right: 20,
-    width: 320,
-    maxHeight: 400,
+    flex: 1,
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: 'hidden',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  closeBtn: {
+    marginRight: 12,
   },
   notificationsHeader: {
     flexDirection: 'row',
