@@ -11,7 +11,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse, User } from '../types';
 import ThreadCard from '../components/ThreadCard';
-import { CURRENT_USER } from '../constants/auth';
+import { useAuth } from '../context/AuthContext';
 import userService from '../services/user.service';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
@@ -24,7 +24,8 @@ export interface UserProfileScreenProps {
 }
 
 export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect }: UserProfileScreenProps) {
-  const isOwnProfile = username === CURRENT_USER.username;
+  const { user: authUser, logout } = useAuth();
+  const isOwnProfile = username === authUser?.username;
   
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [bio, setBio] = useState('');
@@ -156,10 +157,15 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
         <View style={styles.nameRow}>
           <Text style={styles.username}>{username}</Text>
           {isOwnProfile && !isEditing && (
-            <TouchableOpacity style={styles.editBtn} onPress={startEditing}>
-              <Feather name="edit-3" size={14} color="#1a1a2e" />
-              <Text style={styles.editBtnText}>Edit Profile</Text>
-            </TouchableOpacity>
+            <View style={styles.actionButtonsRow}>
+              <TouchableOpacity style={styles.editBtn} onPress={startEditing}>
+                <Feather name="edit-3" size={14} color="#1a1a2e" />
+                <Text style={styles.editBtnText}>Edit Profile</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+                <Feather name="log-out" size={14} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
           )}
           {isOwnProfile && isEditing && (
             <View style={styles.editActionsRow}>
@@ -392,6 +398,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
+    width: '100%',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   username: {
     fontFamily: 'Urbanist',
@@ -413,6 +425,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1a1a2e',
     marginLeft: 4,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#fee2e2',
   },
   editActionsRow: {
     flexDirection: 'row',
