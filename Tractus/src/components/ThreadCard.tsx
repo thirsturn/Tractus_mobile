@@ -18,16 +18,6 @@ export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
       activeOpacity={0.7}
       onPress={onPress}
     >
-      {/* Left side: Voting Controls */}
-      <View style={styles.votingContainer}>
-        <TouchableOpacity style={styles.voteBtn}>
-          <Feather name="arrow-up" size={20} color="#6b7280" />
-        </TouchableOpacity>
-        <Text style={styles.voteCount}>{upvotes}</Text>
-        <TouchableOpacity style={styles.voteBtn}>
-          <Feather name="arrow-down" size={20} color="#6b7280" />
-        </TouchableOpacity>
-      </View>
 
       {/* Main Content Area */}
       <View style={styles.contentContainer}>
