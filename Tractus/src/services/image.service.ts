@@ -16,11 +16,12 @@ const imageService = {
       type,
     } as any);
 
-    return await api.post<ImageUploadResponse>('/images/upload', formData, {
+    const response = await api.post<ImageUploadResponse>('/images/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
   }
 };
 

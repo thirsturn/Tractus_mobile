@@ -6,109 +6,36 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
-import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import ThreadCard from '../components/ThreadCard';
 import TopNav from '../components/TopNav';
 import type { ThreadResponse } from '../types';
-
-import threadService from '../services/thread.service';
-import imageService from '../services/image.service';
 import { useAuth } from '../context/AuthContext';
+import threadService from '../services/thread.service';
 
 interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
   onUserSelect?: (username: string) => void;
+  onCreatePost?: () => void;
 }
 
-export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenProps) {
-  const { user } = useAuth();
+export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>([]);
-  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
 
   React.useEffect(() => {
-    loadThreads();
-  }, []);
-
-  const loadThreads = async () => {
-    try {
-      const data = await threadService.getThreadsBySpace(1);
-      // Sort newest first assuming backend might not sort
-      setThreads(data.sort((a, b) => b.id - a.id));
-    } catch (err) {
-      console.error("Failed to load threads:", err);
-    }
-  };
-
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImagePreview(result.assets[0].uri);
-    }
-  };
-
-  const removeImage = () => {
-    setImagePreview(null);
-  };
-
-  const handleCreatePost = async () => {
-    if (!newTitle.trim()) return;
-    setIsSubmitting(true);
-    
-    try {
-      let imageUrl = undefined;
-      if (imagePreview) {
-        const result = await imageService.uploadImage(imagePreview);
-        imageUrl = result.url;
+    const fetchThreads = async () => {
+      try {
+        const data = await threadService.getThreadsBySpace(1);
+        // Sort by ID descending to show newest first
+        setThreads(data.sort((a, b) => b.id - a.id));
+      } catch (error) {
+        console.error("Failed to fetch threads:", error);
       }
-      
-      await threadService.createThread({
-        title: newTitle.trim(),
-        content: newContent,
-        spaceId: 1,
-        imageUrl,
-      });
-      
-      setNewTitle('');
-      setNewContent('');
-      setImagePreview(null);
-      setIsCreateModalVisible(false);
-      loadThreads(); // Refresh the feed
-    } catch (err) {
-      console.error("Failed to create post", err);
-      // Fallback local update if backend error
-      const newThread: ThreadResponse = {
-        id: Date.now(),
-        title: newTitle.trim(),
-        content: newContent,
-        imageUrl: imagePreview || undefined,
-        spaceId: 1,
-        author: { id: user?.id || 0, username: user?.username || 'You', email: user?.email || '' }
-      };
-      setThreads([newThread, ...threads]);
-      setNewTitle('');
-      setNewContent('');
-      setImagePreview(null);
-      setIsCreateModalVisible(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
+    fetchThreads();
+  }, []);
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -116,7 +43,7 @@ export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenP
         <Text style={styles.headerTitle}>Home Feed</Text>
         <Text style={styles.headerSubtitle}>Join the discussion</Text>
       </View>
-      <TouchableOpacity style={styles.createBtn} onPress={() => setIsCreateModalVisible(true)}>
+      <TouchableOpacity style={styles.createBtn} onPress={onCreatePost}>
         <Feather name="plus" size={18} color="#ffffff" style={styles.createBtnIconText} />
         <Text style={styles.createBtnText}>Create Post</Text>
       </TouchableOpacity>
@@ -142,65 +69,6 @@ export default function HomeScreen({ onThreadSelect, onUserSelect }: HomeScreenP
           showsVerticalScrollIndicator={false}
         />
       </View>
-
-      {/* Create Post Modal */}
-      <Modal visible={isCreateModalVisible} animationType="slide" presentationStyle="pageSheet">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalContainer}
-        >
-          <SafeAreaView style={styles.modalSafeArea}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setIsCreateModalVisible(false)}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>New Post</Text>
-              <TouchableOpacity 
-                disabled={!newTitle.trim() || isSubmitting} 
-                onPress={handleCreatePost}
-              >
-                <Text style={[styles.modalPostText, (!newTitle.trim() || isSubmitting) && styles.modalPostDisabled]}>
-                  {isSubmitting ? 'Posting...' : 'Post'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalBody}>
-              <TextInput
-                style={styles.inputTitle}
-                placeholder="Thread Title"
-                placeholderTextColor="#9ca3af"
-                value={newTitle}
-                onChangeText={setNewTitle}
-              />
-              <TextInput
-                style={styles.inputContent}
-                placeholder="What's on your mind? (Optional)"
-                placeholderTextColor="#9ca3af"
-                multiline
-                value={newContent}
-                onChangeText={setNewContent}
-                autoFocus
-              />
-              
-              <View style={styles.imageSection}>
-                {!imagePreview ? (
-                  <TouchableOpacity style={styles.addImageBtn} onPress={pickImage}>
-                    <Feather name="image" size={18} color="#fa477a" style={{ marginRight: 8 }} />
-                    <Text style={styles.addImageText}>Attach an Image</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.imagePreviewContainer}>
-                    <Image source={{ uri: imagePreview }} style={styles.imagePreview} contentFit="cover" />
-                    <TouchableOpacity style={styles.removeImageBtn} onPress={removeImage}>
-                      <Feather name="x" size={16} color="#ffffff" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </View>
-          </SafeAreaView>
-        </KeyboardAvoidingView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -257,106 +125,5 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
-  },
-  
-  // Modal Styles
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  modalSafeArea: {
-    flex: 1,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  modalCancelText: {
-    fontFamily: 'Urbanist',
-    fontSize: 16,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  modalTitle: {
-    fontFamily: 'Urbanist',
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1a1a2e',
-  },
-  modalPostText: {
-    fontFamily: 'Urbanist',
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fa477a',
-  },
-  modalPostDisabled: {
-    color: '#fca5a5',
-  },
-  modalBody: {
-    flex: 1,
-    padding: 20,
-  },
-  inputTitle: {
-    fontFamily: 'Urbanist',
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1a1a2e',
-    marginBottom: 20,
-  },
-  inputContent: {
-    flex: 1,
-    fontFamily: 'Urbanist',
-    fontSize: 16,
-    color: '#374151',
-    textAlignVertical: 'top',
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  imageSection: {
-    marginTop: 10,
-  },
-  addImageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(250, 71, 122, 0.08)',
-    alignSelf: 'flex-start',
-  },
-  addImageText: {
-    fontFamily: 'Urbanist',
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fa477a',
-  },
-  imagePreviewContainer: {
-    position: 'relative',
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  imagePreview: {
-    width: '100%',
-    height: '100%',
-  },
-  removeImageBtn: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  }
 });

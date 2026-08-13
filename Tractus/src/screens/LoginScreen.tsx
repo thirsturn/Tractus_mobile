@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useAuth } from '../context/AuthContext';
+import authService from '../services/auth.service';
 
 interface LoginScreenProps {
   onLogin?: () => void;
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,26 +36,29 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       setError('Please fill in all required fields.');
       return;
     }
-    if (!isLogin && password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
     
     setIsSubmitting(true);
     try {
       if (isLogin) {
-        await login(username.trim(), password);
+        const { token, user } = await authService.login(username.trim(), password);
+        await login(token, user);
       } else {
         if (!email.trim()) {
           setError('Email is required for registration.');
           setIsSubmitting(false);
           return;
         }
-        await register(username.trim(), email.trim(), password);
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          setIsSubmitting(false);
+          return;
+        }
+        const { token, user } = await authService.register({ username: username.trim(), email: email.trim(), password });
+        await login(token, user);
       }
       onLogin?.();
     } catch (err: any) {
-      setError(isLogin ? 'Invalid username or password.' : 'Registration failed. Username may already exist.');
+      setError(err.response?.data?.message || 'Authentication failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -153,9 +157,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 </View>
               )}
 
-              {error && (
-                <Text style={styles.errorText}>{error}</Text>
-              )}
+              {error && <Text style={styles.errorText}>{error}</Text>}
 
               <TouchableOpacity style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={isSubmitting}>
                 <Text style={styles.submitBtnText}>

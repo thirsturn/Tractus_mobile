@@ -13,11 +13,13 @@ export interface UserUpdateData {
 
 const userService = {
   getUserByUsername: async (username: string): Promise<User> => {
-    return await api.get<User>(`/users/${username}`);
+    const response = await api.get<User>(`/users/${username}`);
+    return response.data;
   },
 
   updateUser: async (id: number, data: UserUpdateData): Promise<User> => {
-    return await api.put<User>(`/users/${id}`, data);
+    const response = await api.put<User>(`/users/${id}`, data);
+    return response.data;
   },
 
   uploadAvatar: async (id: number, uri: string): Promise<User> => {

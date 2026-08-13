@@ -11,8 +11,28 @@ export interface User {
 export interface ThreadResponse {
   id: number;
   title: string;
-  content?: string;
+  content: string;
   imageUrl?: string;
   author: User;
   spaceId: number;
+  commentCount?: number;
+}
+
+export interface CommentResponse {
+  id: number;
+  content: string;
+  author: User;
+  threadId: number;
+  parentCommentId?: number;
+  createdAt: string;
+  replies?: CommentResponse[];
+}
+
+export type VoteType = 'UP' | 'DOWN';
+
+export interface VoteResponse {
+  id: number;
+  userId: number;
+  targetId: number;
+  voteType: VoteType;
 }

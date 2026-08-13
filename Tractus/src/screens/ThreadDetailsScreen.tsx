@@ -13,6 +13,10 @@ import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import TopNav from '../components/TopNav';
 import { useAuth } from '../context/AuthContext';
+import threadService from '../services/thread.service';
+import commentService from '../services/comment.service';
+import voteService from '../services/vote.service';
+import type { ThreadResponse, CommentResponse, VoteResponse } from '../types';
 
 interface ThreadDetailsScreenProps {
   threadId: number;
@@ -21,50 +25,46 @@ interface ThreadDetailsScreenProps {
   onThreadSelect?: (id: number) => void;
 }
 
-interface ThreadComment {
-  id: number;
-  author: string;
-  initial: string;
-  time: string;
-  content: string;
-  upvotes: number;
-  hasUpvoted: boolean;
-  profileImageUrl?: string;
-}
-
 export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, onThreadSelect }: ThreadDetailsScreenProps) {
   const { user } = useAuth();
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState<ThreadComment[]>([]);
-  // TODO: Fetch real thread data by ID from backend
-  const [thread, setThread] = useState({
-    id: 0,
-    title: 'Loading...',
-    content: '',
-    author: { username: '', initial: '' },
-    time: '',
-    stats: { upvotes: 0, comments: 0, reposts: 0 },
-    hasUpvoted: false,
-    hasDownvoted: false,
-    hasReposted: false,
-  });
+  const [thread, setThread] = useState<ThreadResponse | null>(null);
+  const [comments, setComments] = useState<CommentResponse[]>([]);
+  const [threadVotes, setThreadVotes] = useState<VoteResponse[]>([]);
   const inputRef = useRef<TextInput>(null);
 
-  const handleAddComment = () => {
-    if (!commentText.trim()) return;
-    const newComment = {
-      id: Date.now(),
-      author: user?.username || 'Guest',
-      initial: user?.username?.charAt(0).toUpperCase() || 'G',
-      profileImageUrl: user?.profileImageUrl,
-      time: 'Just now',
-      content: commentText.trim(),
-      upvotes: 0,
-      hasUpvoted: false,
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [threadData, commentsData, votesData] = await Promise.all([
+          threadService.getThreadById(threadId),
+          commentService.getCommentsByThread(threadId),
+          voteService.getThreadVotes(threadId)
+        ]);
+        setThread(threadData);
+        setComments(commentsData);
+        setThreadVotes(votesData);
+      } catch (err) {
+        console.error("Failed to fetch thread details", err);
+      }
     };
-    setComments([...comments, newComment]);
-    setCommentText('');
-    inputRef.current?.blur();
+    fetchData();
+  }, [threadId]);
+
+  const handleAddComment = async () => {
+    if (!commentText.trim()) return;
+    try {
+      const newComment = await commentService.createComment({
+        content: commentText.trim(),
+        userId: user!.id,
+        threadId,
+      });
+      setComments([...comments, newComment]);
+      setCommentText('');
+      inputRef.current?.blur();
+    } catch (err) {
+      console.error("Failed to create comment", err);
+    }
   };
 
   const handleReply = (author: string) => {
@@ -72,64 +72,50 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
     inputRef.current?.focus();
   };
 
-  const handleUpvote = (id: number) => {
-    setComments(comments.map(c => {
-      if (c.id === id) {
-        return {
-          ...c,
-          hasUpvoted: !c.hasUpvoted,
-          upvotes: c.hasUpvoted ? c.upvotes - 1 : c.upvotes + 1
-        };
-      }
-      return c;
-    }));
+  const handleThreadUpvote = async () => {
+    try {
+      await voteService.castThreadVote({
+        userId: user!.id,
+        targetId: threadId,
+        voteType: 'UP'
+      });
+      // Refresh votes
+      const votes = await voteService.getThreadVotes(threadId);
+      setThreadVotes(votes);
+    } catch (err) {
+      console.error("Failed to upvote", err);
+    }
   };
 
-  const handlePostUpvote = () => {
-    setThread(prev => ({
-      ...prev,
-      hasUpvoted: !prev.hasUpvoted,
-      hasDownvoted: false,
-      stats: {
-        ...prev.stats,
-        upvotes: prev.hasUpvoted ? prev.stats.upvotes - 1 : prev.stats.upvotes + 1 + (prev.hasDownvoted ? 1 : 0)
-      }
-    }));
-  };
-
-  const handlePostDownvote = () => {
-    setThread(prev => ({
-      ...prev,
-      hasDownvoted: !prev.hasDownvoted,
-      hasUpvoted: false,
-      stats: {
-        ...prev.stats,
-        upvotes: prev.hasDownvoted ? prev.stats.upvotes + 1 : prev.stats.upvotes - 1 - (prev.hasUpvoted ? 1 : 0)
-      }
-    }));
-  };
-
-  const handleRepost = () => {
-    setThread(prev => ({
-      ...prev,
-      hasReposted: !prev.hasReposted,
-      stats: {
-        ...prev.stats,
-        reposts: prev.hasReposted ? prev.stats.reposts - 1 : prev.stats.reposts + 1
-      }
-    }));
+  const handleThreadDownvote = async () => {
+    try {
+      await voteService.castThreadVote({
+        userId: user!.id,
+        targetId: threadId,
+        voteType: 'DOWN'
+      });
+      const votes = await voteService.getThreadVotes(threadId);
+      setThreadVotes(votes);
+    } catch (err) {
+      console.error("Failed to downvote", err);
+    }
   };
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out this thread on Tractus: "${thread.title}"`,
-        url: `https://tractus.app/thread/${thread.id}` // iOS mostly, Android uses message
+        message: `Check out this thread on Tractus: "${thread?.title || ''}"`,
       });
     } catch (error) {
       console.error(error);
     }
   };
+
+  if (!thread) return <SafeAreaView style={styles.safeArea}><Text style={{padding: 20}}>Loading...</Text></SafeAreaView>;
+
+  const upvotes = threadVotes.filter(v => v.voteType === 'UP').length;
+  const downvotes = threadVotes.filter(v => v.voteType === 'DOWN').length;
+  const userVote = threadVotes.find(v => v.userId === user?.id)?.voteType;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -150,11 +136,11 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
               onPress={() => onUserSelect && onUserSelect(thread.author.username)}
             >
               <View style={styles.authorAvatar}>
-                <Text style={styles.authorAvatarText}>{thread.author.initial}</Text>
+                <Text style={styles.authorAvatarText}>{thread.author.username.charAt(0).toUpperCase()}</Text>
               </View>
               <View style={styles.postMeta}>
                 <Text style={styles.authorName}>{thread.author.username}</Text>
-                <Text style={styles.timePosted}>{thread.time}</Text>
+                <Text style={styles.timePosted}>Just now</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.moreBtn}>
@@ -164,40 +150,40 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
 
           <Text style={styles.postTitle}>{thread.title}</Text>
           <View style={styles.postBody}>
-            {thread.content.split('\n').map((paragraph, idx) => (
+            {thread.content && thread.content.split('\n').map((paragraph, idx) => (
               <Text key={idx} style={styles.paragraph}>{paragraph}</Text>
             ))}
+            
+            {thread.imageUrl && (
+              <Image 
+                source={{ uri: thread.imageUrl.replace('http://localhost', 'http://192.168.1.100') }} 
+                style={{ width: '100%', height: 250, borderRadius: 12, marginTop: 12 }} 
+                contentFit="cover" 
+              />
+            )}
           </View>
 
           {/* Statistics Bar */}
           <View style={styles.postStatsBar}>
             <View style={styles.statGroup}>
               <TouchableOpacity 
-                style={[styles.statBtn, thread.hasUpvoted && styles.statBtnActive]}
-                onPress={handlePostUpvote}
+                style={[styles.statBtn, userVote === 'UP' && styles.statBtnActive]}
+                onPress={handleThreadUpvote}
               >
-                <Feather name="arrow-up" size={18} color={thread.hasUpvoted ? "#fa477a" : "#6b7280"} />
+                <Feather name="arrow-up" size={18} color={userVote === 'UP' ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
-              <Text style={styles.statCount}>{thread.stats.upvotes}</Text>
+              <Text style={styles.statCount}>{upvotes - downvotes}</Text>
               <TouchableOpacity 
-                style={[styles.statBtn, thread.hasDownvoted && styles.statBtnDownActive]}
-                onPress={handlePostDownvote}
+                style={[styles.statBtn, userVote === 'DOWN' && styles.statBtnActive]}
+                onPress={handleThreadDownvote}
               >
-                <Feather name="arrow-down" size={18} color={thread.hasDownvoted ? "#3b82f6" : "#6b7280"} />
+                <Feather name="arrow-down" size={18} color={userVote === 'DOWN' ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
             </View>
             
             <TouchableOpacity style={styles.actionBtn}>
               <Feather name="message-square" size={18} color="#6b7280" />
-              <Text style={styles.actionText}>{thread.stats.comments + comments.length} Comments</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.actionBtn, thread.hasReposted && styles.statBtnActive]}
-              onPress={handleRepost}
-            >
-              <Feather name="repeat" size={18} color={thread.hasReposted ? "#fa477a" : "#6b7280"} />
-              <Text style={[styles.actionText, thread.hasReposted && {color: '#fa477a'}]}>{thread.stats.reposts} Reposts</Text>
+              <Text style={styles.actionText}>{comments.length} Comments</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionBtn} onPress={handleShare}>
@@ -213,11 +199,17 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
           
           {/* Comment Input */}
           <View style={styles.commentInputArea}>
-            <Image 
-              source={{ uri: user?.profileImageUrl }} 
-              style={styles.smallAvatar} 
-              contentFit="cover" 
-            />
+            {user?.profileImageUrl ? (
+              <Image 
+                source={{ uri: user.profileImageUrl }} 
+                style={styles.smallAvatar} 
+                contentFit="cover" 
+              />
+            ) : (
+              <View style={[styles.authorAvatar, styles.smallAvatar, {backgroundColor: '#fa477a'}]}>
+                <Text style={styles.authorAvatarText}>{user?.username?.charAt(0).toUpperCase()}</Text>
+              </View>
+            )}
             <View style={styles.inputWrapper}>
               <TextInput
                 ref={inputRef}
@@ -238,45 +230,40 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
           <View style={styles.commentsList}>
             {comments.map(comment => (
               <View key={comment.id} style={styles.comment}>
-                {comment.profileImageUrl ? (
+                {comment.author.profileImageUrl ? (
                   <Image 
-                    source={{ uri: comment.profileImageUrl }} 
+                    source={{ uri: comment.author.profileImageUrl }} 
                     style={styles.smallAvatar} 
                     contentFit="cover" 
                   />
                 ) : (
-                  <View style={[styles.authorAvatar, styles.smallAvatar, comment.author === user?.username && {backgroundColor: '#fa477a'}]}>
-                    <Text style={styles.authorAvatarText}>{comment.initial}</Text>
+                  <View style={[styles.authorAvatar, styles.smallAvatar, comment.author.id === user?.id && {backgroundColor: '#fa477a'}]}>
+                    <Text style={styles.authorAvatarText}>{comment.author.username.charAt(0).toUpperCase()}</Text>
                   </View>
                 )}
                 <View style={styles.commentContentArea}>
                   <View style={styles.commentHeader}>
-                    <TouchableOpacity onPress={() => onUserSelect && onUserSelect(comment.author)}>
-                      <Text style={styles.commentAuthor}>{comment.author}</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.commentTime}>{comment.time}</Text>
+                    <Text style={styles.commentAuthor}>{comment.author.username}</Text>
+                    <Text style={styles.commentTime}>Just now</Text>
                   </View>
                   <Text style={styles.commentBody}>{comment.content}</Text>
                   <View style={styles.commentActions}>
                     <TouchableOpacity 
                       style={styles.commentActionBtn}
-                      onPress={() => handleUpvote(comment.id)}
+                      onPress={() => {}} // Hook up comment voting later
                     >
                       <Feather 
                         name="arrow-up" 
                         size={14} 
-                        color={comment.hasUpvoted ? '#fa477a' : '#6b7280'} 
+                        color={'#6b7280'} 
                       />
-                      <Text style={[
-                        styles.commentActionText, 
-                        comment.hasUpvoted && {color: '#fa477a', fontWeight: '700'}
-                      ]}>
-                        {comment.upvotes} Upvotes
+                      <Text style={[styles.commentActionText]}>
+                        0 Upvotes
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={styles.commentActionBtn}
-                      onPress={() => handleReply(comment.author)}
+                      onPress={() => handleReply(comment.author.username)}
                     >
                       <Feather name="message-square" size={14} color="#6b7280" />
                       <Text style={styles.commentActionText}>Reply</Text>
