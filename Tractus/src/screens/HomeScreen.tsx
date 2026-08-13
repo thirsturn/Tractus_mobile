@@ -12,19 +12,30 @@ import ThreadCard from '../components/ThreadCard';
 import TopNav from '../components/TopNav';
 import type { ThreadResponse } from '../types';
 
-const MOCK_HOME_THREADS: ThreadResponse[] = [
-  { id: 201, title: 'Welcome to Tractus! Introduce yourself here 👋', spaceId: 1, author: { id: 10, username: 'CommunityManager', email: 'cm@test.com' } },
-  { id: 202, title: 'What are you working on this weekend?', spaceId: 1, author: { id: 11, username: 'WeekendWarrior', email: 'ww@test.com' } },
-  { id: 203, title: 'Tips for transitioning from frontend to full-stack?', spaceId: 1, author: { id: 12, username: 'ReactDev123', email: 'react@test.com' } },
-  { id: 204, title: 'Has anyone tried the new Vite build tools?', spaceId: 1, author: { id: 13, username: 'SpeedCoder', email: 'speed@test.com' } }
-];
+import { useAuth } from '../context/AuthContext';
+import threadService from '../services/thread.service';
 
 interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
+  onCreatePost?: () => void;
 }
 
-export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
-  const [threads, setThreads] = useState<ThreadResponse[]>(MOCK_HOME_THREADS);
+export default function HomeScreen({ onThreadSelect, onCreatePost }: HomeScreenProps) {
+  const [threads, setThreads] = useState<ThreadResponse[]>([]);
+  const { user } = useAuth();
+
+  React.useEffect(() => {
+    const fetchThreads = async () => {
+      try {
+        const data = await threadService.getThreadsBySpace(1);
+        // Sort by ID descending to show newest first
+        setThreads(data.sort((a, b) => b.id - a.id));
+      } catch (error) {
+        console.error("Failed to fetch threads:", error);
+      }
+    };
+    fetchThreads();
+  }, []);
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -32,7 +43,7 @@ export default function HomeScreen({ onThreadSelect }: HomeScreenProps) {
         <Text style={styles.headerTitle}>Home Feed</Text>
         <Text style={styles.headerSubtitle}>Join the discussion</Text>
       </View>
-      <TouchableOpacity style={styles.createBtn}>
+      <TouchableOpacity style={styles.createBtn} onPress={onCreatePost}>
         <Feather name="plus" size={18} color="#ffffff" style={styles.createBtnIconText} />
         <Text style={styles.createBtnText}>Create Post</Text>
       </TouchableOpacity>

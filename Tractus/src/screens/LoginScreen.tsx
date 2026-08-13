@@ -13,6 +13,9 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 
+import { useAuth } from '../context/AuthContext';
+import authService from '../services/auth.service';
+
 interface LoginScreenProps {
   onLogin?: () => void;
 }
@@ -24,6 +27,27 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
+
+  const handleSubmit = async () => {
+    setError(null);
+    try {
+      if (isLogin) {
+        const { token, user } = await authService.login(username, password);
+        await login(token, user);
+      } else {
+        if (password !== confirmPassword) {
+          setError("Passwords do not match");
+          return;
+        }
+        const { token, user } = await authService.register({ username, email, password });
+        await login(token, user);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Authentication failed');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -118,7 +142,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 </View>
               )}
 
-              <TouchableOpacity style={styles.submitBtn} onPress={onLogin}>
+              {error && <Text style={{ color: 'red', marginBottom: 15, fontFamily: 'Urbanist' }}>{error}</Text>}
+
+              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
                 <Text style={styles.submitBtnText}>
                   {isLogin ? 'Sign In' : 'Sign Up'}
                 </Text>

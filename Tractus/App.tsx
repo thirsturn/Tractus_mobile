@@ -6,17 +6,50 @@ import LoadingScreen from './src/screens/LoadingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ThreadDetailsScreen from './src/screens/ThreadDetailsScreen';
+import CreatePostScreen from './src/screens/CreatePostScreen';
+
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+
+  return (
+    <View style={{ flex: 1 }}>
+      {isAuthenticated ? (
+        isCreatingPost ? (
+          <CreatePostScreen 
+            onBack={() => setIsCreatingPost(false)} 
+            onSuccess={() => setIsCreatingPost(false)} 
+          />
+        ) : selectedThreadId ? (
+          <ThreadDetailsScreen 
+            threadId={selectedThreadId} 
+            onBack={() => setSelectedThreadId(null)} 
+          />
+        ) : (
+          <HomeScreen 
+            onThreadSelect={setSelectedThreadId} 
+            onCreatePost={() => setIsCreatingPost(true)} 
+          />
+        )
+      ) : (
+        <LoginScreen onLogin={() => {}} />
+      )}
+      <StatusBar style="auto" />
+    </View>
+  );
+}
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
   const [fontsLoaded] = useFonts({
     'Urbanist': require('./assets/urbanist.ttf'),
   });
 
   if (!fontsLoaded) {
-    return null; // Wait for fonts to load before rendering anything
+    return null;
   }
 
   if (isLoading) {
@@ -24,20 +57,8 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      {isLoggedIn ? (
-        selectedThreadId ? (
-          <ThreadDetailsScreen 
-            threadId={selectedThreadId} 
-            onBack={() => setSelectedThreadId(null)} 
-          />
-        ) : (
-          <HomeScreen onThreadSelect={setSelectedThreadId} />
-        )
-      ) : (
-        <LoginScreen onLogin={() => setIsLoggedIn(true)} />
-      )}
-      <StatusBar style="auto" />
-    </View>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

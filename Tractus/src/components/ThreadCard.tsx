@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse } from '../types';
 
@@ -9,8 +10,8 @@ interface ThreadCardProps {
 }
 
 export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
-  const upvotes = Math.floor(Math.random() * 50);
-  const commentsCount = Math.floor(Math.random() * 20);
+  const upvotes = Math.floor(Math.random() * 50); // To be replaced with real vote data
+  const commentsCount = thread.commentCount || 0;
 
   return (
     <TouchableOpacity
@@ -42,6 +43,22 @@ export default function ThreadCard({ thread, onPress }: ThreadCardProps) {
         </View>
 
         <Text style={styles.title}>{thread.title}</Text>
+
+        {thread.content && (
+          <Text style={styles.previewText} numberOfLines={3}>
+            {thread.content}
+          </Text>
+        )}
+
+        {thread.imageUrl && (
+          <View style={styles.imageContainer}>
+            <Image 
+              source={{ uri: thread.imageUrl.replace('http://localhost', 'http://192.168.1.100') }} 
+              style={styles.threadImage} 
+              contentFit="cover" 
+            />
+          </View>
+        )}
 
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionBtn}>
@@ -126,6 +143,24 @@ const styles = StyleSheet.create({
     color: '#1a1a2e',
     marginBottom: 12,
     lineHeight: 24,
+  },
+  previewText: {
+    fontFamily: 'Urbanist',
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 180,
+    marginBottom: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  threadImage: {
+    width: '100%',
+    height: '100%',
   },
   actions: {
     flexDirection: 'row',
