@@ -31,6 +31,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
   const [thread, setThread] = useState<ThreadResponse | null>(null);
   const [comments, setComments] = useState<CommentResponse[]>([]);
   const [threadVotes, setThreadVotes] = useState<VoteResponse[]>([]);
+  const [commentVotes, setCommentVotes] = useState<Record<number, VoteResponse[]>>({});
   const inputRef = useRef<TextInput>(null);
 
   React.useEffect(() => {
@@ -44,12 +45,37 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
         setThread(threadData);
         setComments(commentsData);
         setThreadVotes(votesData);
+
+        const votesByComment = await Promise.all(
+          commentsData.map(c => voteService.getCommentVotes(c.id))
+        );
+        setCommentVotes(
+          commentsData.reduce((acc, c, idx) => {
+            acc[c.id] = votesByComment[idx];
+            return acc;
+          }, {} as Record<number, VoteResponse[]>)
+        );
       } catch (err) {
         console.error("Failed to fetch thread details", err);
       }
     };
     fetchData();
   }, [threadId]);
+
+  const handleCommentUpvote = async (commentId: number) => {
+    if (!user) return;
+    try {
+      await voteService.castCommentVote({
+        userId: user.id,
+        targetId: commentId,
+        voteType: 'UP'
+      });
+      const votes = await voteService.getCommentVotes(commentId);
+      setCommentVotes(prev => ({ ...prev, [commentId]: votes }));
+    } catch (err) {
+      console.error("Failed to upvote comment", err);
+    }
+  };
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
@@ -228,7 +254,11 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
 
           {/* Comment List */}
           <View style={styles.commentsList}>
-            {comments.map(comment => (
+            {comments.map(comment => {
+              const votes = commentVotes[comment.id] || [];
+              const upvotes = votes.filter(v => v.voteType === 'UP').length;
+              const hasUpvoted = votes.some(v => v.userId === user?.id && v.voteType === 'UP');
+              return (
               <View key={comment.id} style={styles.comment}>
                 {comment.author.profileImageUrl ? (
                   <Image 
@@ -248,20 +278,20 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                   </View>
                   <Text style={styles.commentBody}>{comment.content}</Text>
                   <View style={styles.commentActions}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.commentActionBtn}
-                      onPress={() => {}} // Hook up comment voting later
+                      onPress={() => handleCommentUpvote(comment.id)}
                     >
-                      <Feather 
-                        name="arrow-up" 
-                        size={14} 
-                        color={'#6b7280'} 
+                      <Feather
+                        name="arrow-up"
+                        size={14}
+                        color={hasUpvoted ? '#fa477a' : '#6b7280'}
                       />
                       <Text style={[styles.commentActionText]}>
-                        0 Upvotes
+                        {upvotes} Upvotes
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.commentActionBtn}
                       onPress={() => handleReply(comment.author.username)}
                     >
@@ -271,7 +301,8 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                   </View>
                 </View>
               </View>
-            ))}
+              );
+            })}
           </View>
         </View>
       </ScrollView>
