@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import ThreadCard from '../components/ThreadCard';
@@ -25,21 +26,28 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost, onExplorePress, onMessagesPress }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const fetchThreads = async () => {
+    try {
+      const data = await threadService.getThreadsBySpace(1);
+      setThreads(data.sort((a, b) => b.id - a.id));
+    } catch (error) {
+      console.error("Failed to fetch threads:", error);
+    }
+  };
+
   React.useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        const data = await threadService.getThreadsBySpace(1);
-        // Sort by ID descending to show newest first
-        setThreads(data.sort((a, b) => b.id - a.id));
-      } catch (error) {
-        console.error("Failed to fetch threads:", error);
-      }
-    };
     fetchThreads();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchThreads();
+    setRefreshing(false);
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -71,6 +79,9 @@ export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost,
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} tintColor={colors.primary} />
+          }
         />
       </View>
     </SafeAreaView>

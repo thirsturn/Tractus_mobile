@@ -529,6 +529,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
     width: '100%',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   actionButtonsRow: {
     flexDirection: 'row',
