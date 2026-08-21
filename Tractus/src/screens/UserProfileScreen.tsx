@@ -27,7 +27,7 @@ export interface UserProfileScreenProps {
 }
 
 export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect }: UserProfileScreenProps) {
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser, logout, updateAuthUser } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
   const isOwnProfile = username === authUser?.username;
   
@@ -38,6 +38,7 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
   
   const [isEditing, setIsEditing] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFollowPending, setIsFollowPending] = useState(false);
   
@@ -121,18 +122,46 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.5,
+      quality: 0.8,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets && result.assets.length > 0) {
       setIsUploadingAvatar(true);
       try {
         const updatedUser = await userService.uploadAvatar(profileUser.id, result.assets[0].uri);
         setProfileUser(updatedUser);
+        if (isOwnProfile) {
+          updateAuthUser(updatedUser);
+        }
       } catch (err) {
         console.error("Failed to upload avatar", err);
       } finally {
         setIsUploadingAvatar(false);
+      }
+    }
+  };
+
+  const pickCover = async () => {
+    if (!profileUser) return;
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setIsUploadingCover(true);
+      try {
+        const updatedUser = await userService.uploadCover(profileUser.id, result.assets[0].uri);
+        setProfileUser(updatedUser);
+        if (isOwnProfile) {
+          updateAuthUser(updatedUser);
+        }
+      } catch (err) {
+        console.error("Failed to upload cover photo", err);
+      } finally {
+        setIsUploadingCover(false);
       }
     }
   };
@@ -162,7 +191,27 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
 
   const renderHeader = () => (
     <View style={[styles.profileHeader, { backgroundColor: colors.surface }]}>
-      <View style={[styles.banner, { backgroundColor: colors.primary }]} />
+      <View style={[styles.banner, { backgroundColor: colors.primary }]}>
+        {profileUser?.coverImageUrl && (
+          <Image
+            source={{ uri: getImageUrl(profileUser.coverImageUrl) }}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+          />
+        )}
+        {isOwnProfile && isEditing && (
+          <TouchableOpacity
+            style={styles.coverUploadBtn}
+            onPress={pickCover}
+            disabled={isUploadingCover}
+          >
+            <Feather name="camera" size={14} color="#ffffff" />
+            <Text style={styles.coverUploadText}>
+              {isUploadingCover ? 'Uploading...' : 'Change Cover'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
       <View style={[styles.headerContent, { borderBottomColor: colors.border }]}>
         <View style={styles.avatarWrapper}>
           <View style={[styles.avatarLarge, { backgroundColor: colors.accent, borderColor: colors.surface }]}>
@@ -396,8 +445,28 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   banner: {
-    height: 100,
+    height: 120,
     backgroundColor: '#2a067a', // Deep purple
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  coverUploadBtn: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    gap: 4,
+  },
+  coverUploadText: {
+    fontFamily: 'Urbanist',
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   headerContent: {
     paddingHorizontal: 20,

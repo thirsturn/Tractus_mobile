@@ -6,6 +6,7 @@ export interface User {
   location?: string;
   website?: string;
   profileImageUrl?: string;
+  coverImageUrl?: string;
   firstName?: string;
   lastName?: string;
   phoneNumber?: string;
