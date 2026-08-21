@@ -32,6 +32,9 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
   const [comments, setComments] = useState<CommentResponse[]>([]);
   const [threadVotes, setThreadVotes] = useState<VoteResponse[]>([]);
   const [commentVotes, setCommentVotes] = useState<Record<number, VoteResponse[]>>({});
+  const [replyingTo, setReplyingTo] = useState<number | undefined>(undefined);
+  const [isVotingThread, setIsVotingThread] = useState(false);
+  const [votingCommentIds, setVotingCommentIds] = useState<Set<number>>(new Set());
   const inputRef = useRef<TextInput>(null);
 
   React.useEffect(() => {
@@ -63,7 +66,8 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
   }, [threadId]);
 
   const handleCommentUpvote = async (commentId: number) => {
-    if (!user) return;
+    if (!user || votingCommentIds.has(commentId)) return;
+    setVotingCommentIds(prev => new Set(prev).add(commentId));
     try {
       await voteService.castCommentVote({
         userId: user.id,
@@ -74,6 +78,12 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
       setCommentVotes(prev => ({ ...prev, [commentId]: votes }));
     } catch (err) {
       console.error("Failed to upvote comment", err);
+    } finally {
+      setVotingCommentIds(prev => {
+        const next = new Set(prev);
+        next.delete(commentId);
+        return next;
+      });
     }
   };
 
@@ -84,21 +94,26 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
         content: commentText.trim(),
         userId: user!.id,
         threadId,
+        parentCommentId: replyingTo,
       });
       setComments([...comments, newComment]);
       setCommentText('');
+      setReplyingTo(undefined);
       inputRef.current?.blur();
     } catch (err) {
       console.error("Failed to create comment", err);
     }
   };
 
-  const handleReply = (author: string) => {
+  const handleReply = (author: string, commentId: number) => {
+    setReplyingTo(commentId);
     setCommentText(`@${author} `);
     inputRef.current?.focus();
   };
 
   const handleThreadUpvote = async () => {
+    if (isVotingThread) return;
+    setIsVotingThread(true);
     try {
       await voteService.castThreadVote({
         userId: user!.id,
@@ -110,10 +125,14 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
       setThreadVotes(votes);
     } catch (err) {
       console.error("Failed to upvote", err);
+    } finally {
+      setIsVotingThread(false);
     }
   };
 
   const handleThreadDownvote = async () => {
+    if (isVotingThread) return;
+    setIsVotingThread(true);
     try {
       await voteService.castThreadVote({
         userId: user!.id,
@@ -124,6 +143,8 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
       setThreadVotes(votes);
     } catch (err) {
       console.error("Failed to downvote", err);
+    } finally {
+      setIsVotingThread(false);
     }
   };
 
@@ -192,16 +213,18 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
           {/* Statistics Bar */}
           <View style={styles.postStatsBar}>
             <View style={styles.statGroup}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.statBtn, userVote === 'UP' && styles.statBtnActive]}
                 onPress={handleThreadUpvote}
+                disabled={isVotingThread}
               >
                 <Feather name="arrow-up" size={18} color={userVote === 'UP' ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
               <Text style={styles.statCount}>{upvotes - downvotes}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.statBtn, userVote === 'DOWN' && styles.statBtnActive]}
                 onPress={handleThreadDownvote}
+                disabled={isVotingThread}
               >
                 <Feather name="arrow-down" size={18} color={userVote === 'DOWN' ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
@@ -281,6 +304,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                     <TouchableOpacity
                       style={styles.commentActionBtn}
                       onPress={() => handleCommentUpvote(comment.id)}
+                      disabled={votingCommentIds.has(comment.id)}
                     >
                       <Feather
                         name="arrow-up"
@@ -293,7 +317,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.commentActionBtn}
-                      onPress={() => handleReply(comment.author.username)}
+                      onPress={() => handleReply(comment.author.username, comment.id)}
                     >
                       <Feather name="message-square" size={14} color="#6b7280" />
                       <Text style={styles.commentActionText}>Reply</Text>
