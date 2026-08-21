@@ -24,6 +24,7 @@ export interface ThreadResponse {
   imageUrl?: string;
   author: User;
   spaceId: number;
+  createdAt?: string;
   commentCount?: number;
 }
 

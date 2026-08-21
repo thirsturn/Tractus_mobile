@@ -69,7 +69,12 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
 
     try {
       const posts = await threadService.getThreadsByUser(username);
-      setUserPosts(posts);
+      const sortedPosts = posts.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return (dateB - dateA) || (b.id - a.id);
+      });
+      setUserPosts(sortedPosts);
     } catch (err) {
       console.error("Failed to load user posts:", err);
     }
@@ -195,7 +200,7 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
         {profileUser?.coverImageUrl && (
           <Image
             source={{ uri: getImageUrl(profileUser.coverImageUrl) }}
-            style={StyleSheet.absoluteFillObject}
+            style={[StyleSheet.absoluteFillObject, { width: '100%', height: '100%' }]}
             contentFit="cover"
           />
         )}
