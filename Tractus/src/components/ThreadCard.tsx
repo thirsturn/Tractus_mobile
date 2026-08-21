@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse } from '../types';
+import { LOCAL_IP } from '../services/api';
 
 interface ThreadCardProps {
   thread: ThreadResponse;
@@ -49,7 +50,7 @@ export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCard
         {thread.imageUrl && (
           <View style={styles.imageContainer}>
             <Image 
-              source={{ uri: thread.imageUrl.replace('http://localhost', 'http://192.168.1.100') }} 
+              source={{ uri: thread.imageUrl.replace('http://localhost', `http://${LOCAL_IP}`) }}
               style={styles.threadImage} 
               contentFit="cover" 
             />

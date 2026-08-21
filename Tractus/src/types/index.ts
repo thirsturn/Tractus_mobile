@@ -6,6 +6,11 @@ export interface User {
   location?: string;
   website?: string;
   profileImageUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: string;
 }
 
 export interface ThreadResponse {

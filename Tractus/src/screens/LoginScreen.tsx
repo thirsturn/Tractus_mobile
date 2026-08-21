@@ -25,6 +25,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [gender, setGender] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +48,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         const { token, user } = await authService.login(username.trim(), password);
         await login(token, user);
       } else {
-        if (!email.trim()) {
-          setError('Email is required for registration.');
+        if (!email.trim() || !firstName.trim() || !lastName.trim() || !phoneNumber.trim() || !dateOfBirth.trim() || !gender) {
+          setError('Please fill in all required fields.');
           setIsSubmitting(false);
           return;
         }
@@ -53,7 +58,17 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           setIsSubmitting(false);
           return;
         }
-        const { token, user } = await authService.register({ username: username.trim(), email: email.trim(), password });
+        await authService.register({
+          username: username.trim(),
+          email: email.trim(),
+          passwordHash: password,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phoneNumber: phoneNumber.trim(),
+          dateOfBirth,
+          gender,
+        });
+        const { token, user } = await authService.login(username.trim(), password);
         await login(token, user);
       }
       onLogin?.();
@@ -114,6 +129,75 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     value={email}
                     onChangeText={setEmail}
                   />
+                </View>
+              )}
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="First Name"
+                    placeholderTextColor="#aaa"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                  />
+                </View>
+              )}
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Last Name"
+                    placeholderTextColor="#aaa"
+                    value={lastName}
+                    onChangeText={setLastName}
+                  />
+                </View>
+              )}
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Telephone Number"
+                    placeholderTextColor="#aaa"
+                    keyboardType="phone-pad"
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                  />
+                </View>
+              )}
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Date of Birth (YYYY-MM-DD)"
+                    placeholderTextColor="#aaa"
+                    keyboardType="numbers-and-punctuation"
+                    value={dateOfBirth}
+                    onChangeText={setDateOfBirth}
+                  />
+                </View>
+              )}
+
+              {!isLogin && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.genderLabel}>Gender</Text>
+                  <View style={styles.genderRow}>
+                    {['Female', 'Male', 'Other', 'Prefer not to say'].map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        style={[styles.genderChip, gender === option && styles.genderChipActive]}
+                        onPress={() => setGender(option)}
+                      >
+                        <Text style={[styles.genderChipText, gender === option && styles.genderChipTextActive]}>
+                          {option}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               )}
 
@@ -264,6 +348,39 @@ const styles = StyleSheet.create({
     color: '#555',
     fontWeight: '500',
     fontSize: 14,
+  },
+  genderLabel: {
+    fontFamily: 'Urbanist',
+    color: '#555',
+    fontWeight: '500',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  genderChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fff',
+  },
+  genderChipActive: {
+    backgroundColor: '#2a067a',
+    borderColor: '#2a067a',
+  },
+  genderChipText: {
+    fontFamily: 'Urbanist',
+    color: '#555',
+    fontWeight: '500',
+    fontSize: 13,
+  },
+  genderChipTextActive: {
+    color: '#fff',
   },
   forgotPassword: {
     fontFamily: 'Urbanist',
