@@ -171,7 +171,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
   return (
     <SafeAreaView style={styles.safeArea}>
       <TopNav onUserSelect={onUserSelect} onThreadSelect={onThreadSelect} />
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         
         {/* Navigation Bar */}
         <TouchableOpacity style={styles.backBtn} onPress={onBack}>

@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     color: '#1a1a2e',
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   profileHeader: {
     backgroundColor: '#ffffff',
@@ -529,6 +529,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
     width: '100%',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   actionButtonsRow: {
     flexDirection: 'row',

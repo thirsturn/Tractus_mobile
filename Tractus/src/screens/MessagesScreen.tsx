@@ -169,6 +169,7 @@ export default function MessagesScreen({ onBack, initialPartnerUsername, onUserS
             <FlatList
               data={filteredUsers}
               keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={{ paddingBottom: 40 }}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[styles.convItem, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}
@@ -197,6 +198,7 @@ export default function MessagesScreen({ onBack, initialPartnerUsername, onUserS
             <FlatList
               data={conversations}
               keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={{ paddingBottom: 40 }}
               ListEmptyComponent={() => (
                 <View style={styles.emptyContainer}>
                   <Feather name="message-square" size={40} color={colors.textMuted} />
@@ -236,8 +238,8 @@ export default function MessagesScreen({ onBack, initialPartnerUsername, onUserS
         /* IF ACTIVE PARTNER -> CHAT MESSAGES ROOM */
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
         >
           <FlatList
             ref={flatListRef}
@@ -245,7 +247,7 @@ export default function MessagesScreen({ onBack, initialPartnerUsername, onUserS
             keyExtractor={(item) => item.id.toString()}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            contentContainerStyle={{ padding: 16, gap: 10 }}
+            contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 10 }}
             ListEmptyComponent={() => (
               <View style={styles.emptyContainer}>
                 <Feather name="send" size={36} color={colors.textMuted} />
@@ -435,24 +437,27 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 26,
     borderTopWidth: 1,
-    gap: 8,
+    gap: 10,
   },
   chatInput: {
     flex: 1,
     fontFamily: 'Urbanist',
     fontSize: 15,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    maxHeight: 100,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minHeight: 44,
+    maxHeight: 110,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
