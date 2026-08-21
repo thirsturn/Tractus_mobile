@@ -200,7 +200,7 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
         {profileUser?.coverImageUrl && (
           <Image
             source={{ uri: getImageUrl(profileUser.coverImageUrl) }}
-            style={StyleSheet.absoluteFillObject}
+            style={[StyleSheet.absoluteFillObject, { width: '100%', height: '100%' }]}
             contentFit="cover"
           />
         )}
