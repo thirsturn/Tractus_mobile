@@ -10,12 +10,13 @@ interface TopNavProps {
   onUserSelect?: (username: string) => void;
   onThreadSelect?: (id: number) => void;
   onExplorePress?: () => void;
+  onMessagesPress?: () => void;
 }
 
 // TODO: Fetch real notifications from backend
 const INITIAL_NOTIFICATIONS: { id: number; type: string; user: string; action: string; time: string; read: boolean; threadId: number }[] = [];
 
-export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }: TopNavProps) {
+export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress, onMessagesPress }: TopNavProps) {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -70,7 +71,7 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
         />
       </TouchableOpacity>
 
-      {/* Actions (Theme, Search, Notifications & Profile) */}
+      {/* Actions (Theme, Search, Messages, Notifications & Profile) */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity style={styles.iconBtn} onPress={toggleTheme}>
           <Feather name={isDark ? "sun" : "moon"} size={22} color={isDark ? "#f59e0b" : colors.text} />
@@ -78,6 +79,10 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
 
         <TouchableOpacity style={styles.iconBtn} onPress={onExplorePress}>
           <Feather name="search" size={22} color={colors.text} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.iconBtn} onPress={onMessagesPress}>
+          <Feather name="message-square" size={22} color={colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.iconBtn} onPress={() => setIsNotificationsOpen(true)}>
