@@ -97,8 +97,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 20,
+    paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',

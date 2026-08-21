@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     color: '#1a1a2e',
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   profileHeader: {
     backgroundColor: '#ffffff',
