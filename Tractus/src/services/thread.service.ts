@@ -38,6 +38,11 @@ const threadService = {
   getThreadById: async (id: number): Promise<ThreadResponse> => {
     const response = await api.get<ThreadResponse>(`/threads/${id}`);
     return response.data;
+  },
+
+  getThreadsByUser: async (username: string): Promise<ThreadResponse[]> => {
+    const response = await api.get<ThreadResponse[]>(`/threads/user/${username}`);
+    return response.data;
   }
 };
 

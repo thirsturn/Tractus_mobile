@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import threadService from '../services/thread.service';
 import commentService from '../services/comment.service';
 import voteService from '../services/vote.service';
+import { LOCAL_IP } from '../services/api';
 import type { ThreadResponse, CommentResponse, VoteResponse } from '../types';
 
 interface ThreadDetailsScreenProps {
@@ -31,6 +32,10 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
   const [thread, setThread] = useState<ThreadResponse | null>(null);
   const [comments, setComments] = useState<CommentResponse[]>([]);
   const [threadVotes, setThreadVotes] = useState<VoteResponse[]>([]);
+  const [commentVotes, setCommentVotes] = useState<Record<number, VoteResponse[]>>({});
+  const [replyingTo, setReplyingTo] = useState<number | undefined>(undefined);
+  const [isVotingThread, setIsVotingThread] = useState(false);
+  const [votingCommentIds, setVotingCommentIds] = useState<Set<number>>(new Set());
   const inputRef = useRef<TextInput>(null);
 
   React.useEffect(() => {
@@ -44,12 +49,44 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
         setThread(threadData);
         setComments(commentsData);
         setThreadVotes(votesData);
+
+        const votesByComment = await Promise.all(
+          commentsData.map(c => voteService.getCommentVotes(c.id))
+        );
+        setCommentVotes(
+          commentsData.reduce((acc, c, idx) => {
+            acc[c.id] = votesByComment[idx];
+            return acc;
+          }, {} as Record<number, VoteResponse[]>)
+        );
       } catch (err) {
         console.error("Failed to fetch thread details", err);
       }
     };
     fetchData();
   }, [threadId]);
+
+  const handleCommentUpvote = async (commentId: number) => {
+    if (!user || votingCommentIds.has(commentId)) return;
+    setVotingCommentIds(prev => new Set(prev).add(commentId));
+    try {
+      await voteService.castCommentVote({
+        userId: user.id,
+        targetId: commentId,
+        voteType: 'UP'
+      });
+      const votes = await voteService.getCommentVotes(commentId);
+      setCommentVotes(prev => ({ ...prev, [commentId]: votes }));
+    } catch (err) {
+      console.error("Failed to upvote comment", err);
+    } finally {
+      setVotingCommentIds(prev => {
+        const next = new Set(prev);
+        next.delete(commentId);
+        return next;
+      });
+    }
+  };
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
@@ -58,21 +95,26 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
         content: commentText.trim(),
         userId: user!.id,
         threadId,
+        parentCommentId: replyingTo,
       });
       setComments([...comments, newComment]);
       setCommentText('');
+      setReplyingTo(undefined);
       inputRef.current?.blur();
     } catch (err) {
       console.error("Failed to create comment", err);
     }
   };
 
-  const handleReply = (author: string) => {
+  const handleReply = (author: string, commentId: number) => {
+    setReplyingTo(commentId);
     setCommentText(`@${author} `);
     inputRef.current?.focus();
   };
 
   const handleThreadUpvote = async () => {
+    if (isVotingThread) return;
+    setIsVotingThread(true);
     try {
       await voteService.castThreadVote({
         userId: user!.id,
@@ -84,10 +126,14 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
       setThreadVotes(votes);
     } catch (err) {
       console.error("Failed to upvote", err);
+    } finally {
+      setIsVotingThread(false);
     }
   };
 
   const handleThreadDownvote = async () => {
+    if (isVotingThread) return;
+    setIsVotingThread(true);
     try {
       await voteService.castThreadVote({
         userId: user!.id,
@@ -98,13 +144,17 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
       setThreadVotes(votes);
     } catch (err) {
       console.error("Failed to downvote", err);
+    } finally {
+      setIsVotingThread(false);
     }
   };
 
   const handleShare = async () => {
+    const url = `http://${LOCAL_IP}:5173/thread/${threadId}`;
     try {
       await Share.share({
-        message: `Check out this thread on Tractus: "${thread?.title || ''}"`,
+        message: `Check out this thread on Tractus: "${thread?.title || ''}" ${url}`,
+        url,
       });
     } catch (error) {
       console.error(error);
@@ -166,16 +216,18 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
           {/* Statistics Bar */}
           <View style={styles.postStatsBar}>
             <View style={styles.statGroup}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.statBtn, userVote === 'UP' && styles.statBtnActive]}
                 onPress={handleThreadUpvote}
+                disabled={isVotingThread}
               >
                 <Feather name="arrow-up" size={18} color={userVote === 'UP' ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
               <Text style={styles.statCount}>{upvotes - downvotes}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.statBtn, userVote === 'DOWN' && styles.statBtnActive]}
                 onPress={handleThreadDownvote}
+                disabled={isVotingThread}
               >
                 <Feather name="arrow-down" size={18} color={userVote === 'DOWN' ? "#fa477a" : "#6b7280"} />
               </TouchableOpacity>
@@ -228,7 +280,11 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
 
           {/* Comment List */}
           <View style={styles.commentsList}>
-            {comments.map(comment => (
+            {comments.map(comment => {
+              const votes = commentVotes[comment.id] || [];
+              const upvotes = votes.filter(v => v.voteType === 'UP').length;
+              const hasUpvoted = votes.some(v => v.userId === user?.id && v.voteType === 'UP');
+              return (
               <View key={comment.id} style={styles.comment}>
                 {comment.author.profileImageUrl ? (
                   <Image 
@@ -248,22 +304,23 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                   </View>
                   <Text style={styles.commentBody}>{comment.content}</Text>
                   <View style={styles.commentActions}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.commentActionBtn}
-                      onPress={() => {}} // Hook up comment voting later
+                      onPress={() => handleCommentUpvote(comment.id)}
+                      disabled={votingCommentIds.has(comment.id)}
                     >
-                      <Feather 
-                        name="arrow-up" 
-                        size={14} 
-                        color={'#6b7280'} 
+                      <Feather
+                        name="arrow-up"
+                        size={14}
+                        color={hasUpvoted ? '#fa477a' : '#6b7280'}
                       />
                       <Text style={[styles.commentActionText]}>
-                        0 Upvotes
+                        {upvotes} Upvotes
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.commentActionBtn}
-                      onPress={() => handleReply(comment.author.username)}
+                      onPress={() => handleReply(comment.author.username, comment.id)}
                     >
                       <Feather name="message-square" size={14} color="#6b7280" />
                       <Text style={styles.commentActionText}>Reply</Text>
@@ -271,7 +328,8 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
                   </View>
                 </View>
               </View>
-            ))}
+              );
+            })}
           </View>
         </View>
       </ScrollView>

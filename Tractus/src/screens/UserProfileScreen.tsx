@@ -13,6 +13,7 @@ import type { ThreadResponse, User } from '../types';
 import ThreadCard from '../components/ThreadCard';
 import { useAuth } from '../context/AuthContext';
 import userService from '../services/user.service';
+import threadService from '../services/thread.service';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 
@@ -35,6 +36,7 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
   const [isEditing, setIsEditing] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFollowPending, setIsFollowPending] = useState(false);
   
   const [editBio, setEditBio] = useState('');
   const [editLocation, setEditLocation] = useState('');
@@ -56,10 +58,16 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
       setBio(data.bio || '');
       setLocation(data.location || '');
       setWebsite(data.website || '');
-      // In a real app we'd fetch user's posts here too
     } catch (err) {
       console.error("Failed to load profile:", err);
       // Fallback to initial state
+    }
+
+    try {
+      const posts = await threadService.getThreadsByUser(username);
+      setUserPosts(posts);
+    } catch (err) {
+      console.error("Failed to load user posts:", err);
     }
   };
 
@@ -131,6 +139,24 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
     setError(null);
   };
 
+  const handleFollowToggle = async () => {
+    if (!profileUser || isFollowPending) return;
+    setIsFollowPending(true);
+    try {
+      if (profileUser.following) {
+        await userService.unfollowUser(username);
+        setProfileUser({ ...profileUser, following: false, followerCount: Math.max(0, (profileUser.followerCount ?? 1) - 1) });
+      } else {
+        await userService.followUser(username);
+        setProfileUser({ ...profileUser, following: true, followerCount: (profileUser.followerCount ?? 0) + 1 });
+      }
+    } catch (err) {
+      console.error('Failed to update follow status', err);
+    } finally {
+      setIsFollowPending(false);
+    }
+  };
+
   const renderHeader = () => (
     <View style={styles.profileHeader}>
       <View style={styles.banner} />
@@ -178,6 +204,18 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
             </View>
+          )}
+          {!isOwnProfile && authUser && (
+            <TouchableOpacity
+              style={[styles.followBtn, profileUser?.following && styles.followingBtn]}
+              onPress={handleFollowToggle}
+              disabled={isFollowPending}
+            >
+              <Feather name={profileUser?.following ? 'user-check' : 'user-plus'} size={14} color={profileUser?.following ? '#1a1a2e' : '#ffffff'} />
+              <Text style={[styles.followBtnText, profileUser?.following && styles.followingBtnText]}>
+                {profileUser?.following ? 'Following' : 'Follow'}
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -273,11 +311,11 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
             <Text style={styles.statLabel}>Posts</Text>
           </View>
           <View style={styles.statBlock}>
-            <Text style={styles.statNumber}>142</Text>
+            <Text style={styles.statNumber}>{profileUser?.followerCount ?? 0}</Text>
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.statBlock}>
-            <Text style={styles.statNumber}>89</Text>
+            <Text style={styles.statNumber}>{profileUser?.followingCount ?? 0}</Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>
@@ -468,6 +506,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6b7280',
     marginLeft: 4,
+  },
+  followBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fa477a',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  followBtnText: {
+    fontFamily: 'Urbanist',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginLeft: 4,
+  },
+  followingBtn: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  followingBtnText: {
+    color: '#1a1a2e',
   },
   bio: {
     fontFamily: 'Urbanist',
