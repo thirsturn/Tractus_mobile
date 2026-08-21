@@ -13,6 +13,11 @@ export interface UserUpdateData {
 }
 
 const userService = {
+  getAllUsers: async (): Promise<User[]> => {
+    const response = await api.get<User[]>('/users');
+    return response.data;
+  },
+
   getUserByUsername: async (username: string): Promise<User> => {
     const response = await api.get<User>(`/users/${username}`);
     return response.data;
