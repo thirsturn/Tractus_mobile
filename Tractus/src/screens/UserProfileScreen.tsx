@@ -24,9 +24,10 @@ export interface UserProfileScreenProps {
   onBack: () => void;
   onThreadSelect?: (id: number) => void;
   onUserSelect?: (username: string) => void;
+  onMessageUser?: (username: string) => void;
 }
 
-export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect }: UserProfileScreenProps) {
+export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect, onMessageUser }: UserProfileScreenProps) {
   const { user: authUser, logout, updateAuthUser } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
   const isOwnProfile = username === authUser?.username;
@@ -266,16 +267,27 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
             </View>
           )}
           {!isOwnProfile && authUser && (
-            <TouchableOpacity
-              style={[styles.followBtn, { backgroundColor: colors.secondary }, profileUser?.following && [styles.followingBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]]}
-              onPress={handleFollowToggle}
-              disabled={isFollowPending}
-            >
-              <Feather name={profileUser?.following ? 'user-check' : 'user-plus'} size={14} color={profileUser?.following ? colors.text : '#ffffff'} />
-              <Text style={[styles.followBtnText, profileUser?.following && { color: colors.text }]}>
-                {profileUser?.following ? 'Following' : 'Follow'}
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              {onMessageUser && (
+                <TouchableOpacity
+                  style={[styles.editBtn, { backgroundColor: colors.inputBg }]}
+                  onPress={() => onMessageUser(username)}
+                >
+                  <Feather name="message-square" size={14} color={colors.text} />
+                  <Text style={[styles.editBtnText, { color: colors.text }]}>Message</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.followBtn, { backgroundColor: colors.secondary }, profileUser?.following && [styles.followingBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]]}
+                onPress={handleFollowToggle}
+                disabled={isFollowPending}
+              >
+                <Feather name={profileUser?.following ? 'user-check' : 'user-plus'} size={14} color={profileUser?.following ? colors.text : '#ffffff'} />
+                <Text style={[styles.followBtnText, profileUser?.following && { color: colors.text }]}>
+                  {profileUser?.following ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 

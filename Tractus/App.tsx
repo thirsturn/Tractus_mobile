@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import React, { useState } from 'react';
 import { useFonts } from 'expo-font';
 import LoginScreen from './src/screens/LoginScreen';
@@ -8,6 +8,7 @@ import ThreadDetailsScreen from './src/screens/ThreadDetailsScreen';
 import CreatePostScreen from './src/screens/CreatePostScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
+import MessagesScreen from './src/screens/MessagesScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
@@ -18,6 +19,8 @@ function AppContent() {
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [isExploring, setIsExploring] = useState(false);
+  const [isMessaging, setIsMessaging] = useState(false);
+  const [messagingPartner, setMessagingPartner] = useState<string | undefined>(undefined);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -26,6 +29,12 @@ function AppContent() {
           <CreatePostScreen
             onBack={() => setIsCreatingPost(false)}
             onSuccess={() => setIsCreatingPost(false)}
+          />
+        ) : isMessaging ? (
+          <MessagesScreen
+            onBack={() => { setIsMessaging(false); setMessagingPartner(undefined); }}
+            initialPartnerUsername={messagingPartner}
+            onUserSelect={(username) => { setIsMessaging(false); setMessagingPartner(undefined); setSelectedUsername(username); }}
           />
         ) : isExploring ? (
           <ExploreScreen
@@ -39,6 +48,11 @@ function AppContent() {
             onBack={() => setSelectedUsername(null)}
             onThreadSelect={setSelectedThreadId}
             onUserSelect={setSelectedUsername}
+            onMessageUser={(targetUser) => {
+              setSelectedUsername(null);
+              setMessagingPartner(targetUser);
+              setIsMessaging(true);
+            }}
           />
         ) : selectedThreadId ? (
           <ThreadDetailsScreen 
@@ -53,6 +67,7 @@ function AppContent() {
             onUserSelect={setSelectedUsername}
             onCreatePost={() => setIsCreatingPost(true)}
             onExplorePress={() => setIsExploring(true)}
+            onMessagesPress={() => { setMessagingPartner(undefined); setIsMessaging(true); }}
           />
         )
       ) : (
