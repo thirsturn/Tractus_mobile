@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, FlatList, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getImageUrl } from '../utils/imageUrl';
+import notificationService from '../services/notification.service';
+import type { NotificationResponse } from '../types';
 
 interface TopNavProps {
   onUserSelect?: (username: string) => void;
@@ -13,48 +15,81 @@ interface TopNavProps {
   onMessagesPress?: () => void;
 }
 
-// TODO: Fetch real notifications from backend
-const INITIAL_NOTIFICATIONS: { id: number; type: string; user: string; action: string; time: string; read: boolean; threadId: number }[] = [];
-
 export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress, onMessagesPress }: TopNavProps) {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationResponse[]>([]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
-  };
-
-  const handleNotificationPress = (threadId: number) => {
-    setIsNotificationsOpen(false);
-    if (onThreadSelect) {
-      onThreadSelect(threadId);
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      const data = await notificationService.getUserNotifications();
+      setNotifications(data);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
     }
   };
 
-  const renderNotification = ({ item }: { item: typeof INITIAL_NOTIFICATIONS[0] }) => (
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 4000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
+  };
+
+  const handleNotificationPress = async (item: NotificationResponse) => {
+    if (!item.read) {
+      try {
+        await notificationService.markAsRead(item.id);
+        setNotifications(notifications.map(n => n.id === item.id ? { ...n, read: true } : n));
+      } catch (err) {
+        console.error('Failed to mark as read:', err);
+      }
+    }
+    setIsNotificationsOpen(false);
+
+    if (item.targetThreadId && onThreadSelect) {
+      onThreadSelect(item.targetThreadId);
+    } else if (item.type === 'MESSAGE' && onMessagesPress) {
+      onMessagesPress();
+    } else if (item.type === 'FOLLOW' && onUserSelect) {
+      onUserSelect(item.actor.username);
+    }
+  };
+
+  const renderNotification = ({ item }: { item: NotificationResponse }) => (
     <TouchableOpacity 
       style={[
         styles.notificationItem, 
         { backgroundColor: colors.surface, borderBottomColor: colors.border },
         !item.read && { backgroundColor: colors.subtleBg }
       ]}
-      onPress={() => handleNotificationPress(item.threadId)}
+      onPress={() => handleNotificationPress(item)}
     >
       <View style={[styles.notificationIconContainer, { backgroundColor: colors.inputBg }]}>
-        {item.type === 'upvote' && <Feather name="heart" size={16} color={colors.secondary} />}
-        {item.type === 'comment' && <Feather name="message-square" size={16} color={colors.primary} />}
-        {item.type === 'mention' && <Feather name="at-sign" size={16} color={colors.accent} />}
+        {item.type === 'UPVOTE' && <Feather name="heart" size={16} color={colors.secondary} />}
+        {item.type === 'COMMENT' && <Feather name="message-square" size={16} color={colors.primary} />}
+        {item.type === 'FOLLOW' && <Feather name="user-plus" size={16} color={colors.accent} />}
+        {item.type === 'MESSAGE' && <Feather name="mail" size={16} color={colors.primary} />}
       </View>
       <View style={styles.notificationContent}>
-        <Text style={[styles.notificationText, { color: colors.textMuted }]}>
-          <Text style={[styles.notificationUser, { color: colors.text }]}>{item.user} </Text>
-          {item.action}
+        <Text style={[styles.notificationText, { color: colors.text }]}>
+          {item.message}
         </Text>
-        <Text style={[styles.notificationTime, { color: colors.textMuted }]}>{item.time}</Text>
+        <Text style={[styles.notificationTime, { color: colors.textMuted }]}>
+          {item.createdAt ? new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently'}
+        </Text>
       </View>
       {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.secondary }]} />}
     </TouchableOpacity>

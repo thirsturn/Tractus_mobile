@@ -66,3 +66,13 @@ export interface MessageRequest {
   recipientUsername: string;
   content: string;
 }
+
+export interface NotificationResponse {
+  id: number;
+  actor: User;
+  type: 'UPVOTE' | 'COMMENT' | 'FOLLOW' | 'MESSAGE';
+  message: string;
+  targetThreadId?: number;
+  read: boolean;
+  createdAt: string;
+}
