@@ -69,7 +69,12 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
 
     try {
       const posts = await threadService.getThreadsByUser(username);
-      setUserPosts(posts);
+      const sortedPosts = posts.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return (dateB - dateA) || (b.id - a.id);
+      });
+      setUserPosts(sortedPosts);
     } catch (err) {
       console.error("Failed to load user posts:", err);
     }

@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import { getImageUrl } from '../utils/imageUrl';
+import { formatPostDate } from '../utils/date';
 
 interface ThreadCardProps {
   thread: ThreadResponse;
@@ -52,7 +53,7 @@ export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCard
             )}
             <Text style={[styles.authorName, { color: colors.text }]}>{thread.author.username}</Text>
           </TouchableOpacity>
-          <Text style={[styles.metaText, { color: colors.textMuted }]}>• Just now</Text>
+          <Text style={[styles.metaText, { color: colors.textMuted }]}>• {formatPostDate(thread.createdAt)}</Text>
         </View>
 
         <Text style={[styles.title, { color: colors.text }]}>{thread.title}</Text>
