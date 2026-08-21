@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import authService from '../services/auth.service';
 
 interface LoginScreenProps {
@@ -21,6 +22,7 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const { login } = useAuth();
+  const { isDark, colors } = useTheme();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +82,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
@@ -98,10 +100,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
             {/* Form Section */}
             <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>
+              <Text style={[styles.formTitle, { color: colors.primary }]}>
                 {isLogin ? 'Welcome\nBack' : 'Create\nAccount'}
               </Text>
-              <Text style={styles.formSubtitle}>
+              <Text style={[styles.formSubtitle, { color: colors.textMuted }]}>
                 {isLogin
                   ? 'Please enter your details to sign in.'
                   : 'Please enter your details to sign up.'}
@@ -109,9 +111,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
               <View style={styles.inputGroup}>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                   placeholder="Username"
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   value={username}
                   onChangeText={setUsername}
@@ -121,9 +123,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               {!isLogin && (
                 <View style={styles.inputGroup}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                     placeholder="Email Address"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     value={email}
@@ -135,9 +137,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               {!isLogin && (
                 <View style={styles.inputGroup}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                     placeholder="First Name"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={colors.textMuted}
                     value={firstName}
                     onChangeText={setFirstName}
                   />
@@ -147,9 +149,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               {!isLogin && (
                 <View style={styles.inputGroup}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                     placeholder="Last Name"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={colors.textMuted}
                     value={lastName}
                     onChangeText={setLastName}
                   />
@@ -159,9 +161,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               {!isLogin && (
                 <View style={styles.inputGroup}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                     placeholder="Telephone Number"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="phone-pad"
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
@@ -172,9 +174,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               {!isLogin && (
                 <View style={styles.inputGroup}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                     placeholder="Date of Birth (YYYY-MM-DD)"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="numbers-and-punctuation"
                     value={dateOfBirth}
                     onChangeText={setDateOfBirth}
@@ -184,15 +186,23 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
               {!isLogin && (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.genderLabel}>Gender</Text>
+                  <Text style={[styles.genderLabel, { color: colors.textMuted }]}>Gender</Text>
                   <View style={styles.genderRow}>
                     {['Female', 'Male', 'Other', 'Prefer not to say'].map((option) => (
                       <TouchableOpacity
                         key={option}
-                        style={[styles.genderChip, gender === option && styles.genderChipActive]}
+                        style={[
+                          styles.genderChip, 
+                          { backgroundColor: colors.surface, borderColor: colors.border },
+                          gender === option && { backgroundColor: colors.primary, borderColor: colors.primary }
+                        ]}
                         onPress={() => setGender(option)}
                       >
-                        <Text style={[styles.genderChipText, gender === option && styles.genderChipTextActive]}>
+                        <Text style={[
+                          styles.genderChipText, 
+                          { color: colors.textMuted },
+                          gender === option && { color: '#ffffff' }
+                        ]}>
                           {option}
                         </Text>
                       </TouchableOpacity>
@@ -203,9 +213,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
               <View style={styles.inputGroup}>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                   placeholder="Password (••••••••••••)"
-                  placeholderTextColor="#aaa"
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
@@ -215,9 +225,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               {!isLogin && (
                 <View style={styles.inputGroup}>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border }]}
                     placeholder="Confirm Password (••••••••••••)"
-                    placeholderTextColor="#aaa"
+                    placeholderTextColor={colors.textMuted}
                     secureTextEntry
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
@@ -231,30 +241,34 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     style={styles.rememberMe}
                     onPress={() => setRememberMe(!rememberMe)}
                   >
-                    <View style={[styles.checkbox, rememberMe && styles.checkboxActive]} />
-                    <Text style={styles.rememberMeText}>Remember me</Text>
+                    <View style={[
+                      styles.checkbox, 
+                      { borderColor: colors.textMuted },
+                      rememberMe && { backgroundColor: colors.primary, borderColor: colors.primary }
+                    ]} />
+                    <Text style={[styles.rememberMeText, { color: colors.textMuted }]}>Remember me</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity>
-                    <Text style={styles.forgotPassword}>Forgot password?</Text>
+                    <Text style={[styles.forgotPassword, { color: colors.accent }]}>Forgot password?</Text>
                   </TouchableOpacity>
                 </View>
               )}
 
               {error && <Text style={styles.errorText}>{error}</Text>}
 
-              <TouchableOpacity style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={isSubmitting}>
+              <TouchableOpacity style={[styles.submitBtn, { backgroundColor: colors.secondary, shadowColor: colors.secondary }, isSubmitting && { opacity: 0.6 }]} onPress={handleSubmit} disabled={isSubmitting}>
                 <Text style={styles.submitBtnText}>
                   {isSubmitting ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
                 </Text>
               </TouchableOpacity>
 
               <View style={styles.toggleContainer}>
-                <Text style={styles.toggleText}>
+                <Text style={[styles.toggleText, { color: colors.textMuted }]}>
                   {isLogin ? "Don't have an account?" : 'Already have an account?'}
                 </Text>
                 <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-                  <Text style={styles.toggleBtn}>
+                  <Text style={[styles.toggleBtn, { color: colors.primary }]}>
                     {isLogin ? ' Sign up' : ' Sign in'}
                   </Text>
                 </TouchableOpacity>

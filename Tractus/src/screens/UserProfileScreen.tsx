@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse, User } from '../types';
 import ThreadCard from '../components/ThreadCard';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import userService from '../services/user.service';
 import threadService from '../services/thread.service';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,6 +27,7 @@ export interface UserProfileScreenProps {
 
 export default function UserProfileScreen({ username, onBack, onThreadSelect, onUserSelect }: UserProfileScreenProps) {
   const { user: authUser, logout } = useAuth();
+  const { isDark, toggleTheme, colors } = useTheme();
   const isOwnProfile = username === authUser?.username;
   
   const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -158,11 +160,11 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
   };
 
   const renderHeader = () => (
-    <View style={styles.profileHeader}>
-      <View style={styles.banner} />
-      <View style={styles.headerContent}>
+    <View style={[styles.profileHeader, { backgroundColor: colors.surface }]}>
+      <View style={[styles.banner, { backgroundColor: colors.primary }]} />
+      <View style={[styles.headerContent, { borderBottomColor: colors.border }]}>
         <View style={styles.avatarWrapper}>
-          <View style={styles.avatarLarge}>
+          <View style={[styles.avatarLarge, { backgroundColor: colors.accent, borderColor: colors.surface }]}>
             {profileUser?.profileImageUrl ? (
               <Image source={{ uri: profileUser.profileImageUrl }} style={{ width: '100%', height: '100%', borderRadius: 40 }} contentFit="cover" />
             ) : (
@@ -171,7 +173,7 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
           </View>
           {isOwnProfile && isEditing && (
             <TouchableOpacity 
-              style={[styles.avatarUploadBtn, isUploadingAvatar && { opacity: 0.5 }]} 
+              style={[styles.avatarUploadBtn, { backgroundColor: colors.secondary, borderColor: colors.surface }, isUploadingAvatar && { opacity: 0.5 }]} 
               onPress={pickAvatar}
               disabled={isUploadingAvatar}
             >
@@ -181,12 +183,15 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
         </View>
         
         <View style={styles.nameRow}>
-          <Text style={styles.username}>{username}</Text>
+          <Text style={[styles.username, { color: colors.text }]}>{username}</Text>
           {isOwnProfile && !isEditing && (
             <View style={styles.actionButtonsRow}>
-              <TouchableOpacity style={styles.editBtn} onPress={startEditing}>
-                <Feather name="edit-3" size={14} color="#1a1a2e" />
-                <Text style={styles.editBtnText}>Edit Profile</Text>
+              <TouchableOpacity style={[styles.editBtn, { backgroundColor: colors.inputBg }]} onPress={toggleTheme}>
+                <Feather name={isDark ? "sun" : "moon"} size={14} color={isDark ? "#f59e0b" : colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.editBtn, { backgroundColor: colors.inputBg }]} onPress={startEditing}>
+                <Feather name="edit-3" size={14} color={colors.text} />
+                <Text style={[styles.editBtnText, { color: colors.text }]}>Edit Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
                 <Feather name="log-out" size={14} color="#ef4444" />
@@ -195,24 +200,24 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
           )}
           {isOwnProfile && isEditing && (
             <View style={styles.editActionsRow}>
-              <TouchableOpacity style={styles.saveBtn} onPress={saveProfile} disabled={isSaving}>
+              <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.secondary }]} onPress={saveProfile} disabled={isSaving}>
                 <Feather name="save" size={14} color="#ffffff" />
                 <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelBtn} onPress={cancelEditing}>
-                <Feather name="x" size={14} color="#6b7280" />
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+              <TouchableOpacity style={[styles.cancelBtn, { backgroundColor: colors.inputBg }]} onPress={cancelEditing}>
+                <Feather name="x" size={14} color={colors.textMuted} />
+                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
           )}
           {!isOwnProfile && authUser && (
             <TouchableOpacity
-              style={[styles.followBtn, profileUser?.following && styles.followingBtn]}
+              style={[styles.followBtn, { backgroundColor: colors.secondary }, profileUser?.following && [styles.followingBtn, { backgroundColor: colors.inputBg, borderColor: colors.border }]]}
               onPress={handleFollowToggle}
               disabled={isFollowPending}
             >
-              <Feather name={profileUser?.following ? 'user-check' : 'user-plus'} size={14} color={profileUser?.following ? '#1a1a2e' : '#ffffff'} />
-              <Text style={[styles.followBtnText, profileUser?.following && styles.followingBtnText]}>
+              <Feather name={profileUser?.following ? 'user-check' : 'user-plus'} size={14} color={profileUser?.following ? colors.text : '#ffffff'} />
+              <Text style={[styles.followBtnText, profileUser?.following && { color: colors.text }]}>
                 {profileUser?.following ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
@@ -221,77 +226,77 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
 
         {isEditing ? (
           <TextInput
-            style={styles.bioInput}
+            style={[styles.bioInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.border }]}
             value={editBio}
             onChangeText={setEditBio}
             placeholder="Write a bio..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.textMuted}
             multiline
           />
         ) : (
-          <Text style={styles.bio}>{bio}</Text>
+          <Text style={[styles.bio, { color: colors.textMuted }]}>{bio}</Text>
         )}
 
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <View style={styles.metaRow}>
-          <Feather name="mail" size={14} color="#6b7280" />
-          <Text style={styles.metaText}>{username}@tractus.dev</Text>
+          <Feather name="mail" size={14} color={colors.textMuted} />
+          <Text style={[styles.metaText, { color: colors.textMuted }]}>{username}@tractus.dev</Text>
         </View>
 
         <View style={styles.metaRow}>
-          <Feather name="map-pin" size={14} color="#6b7280" />
+          <Feather name="map-pin" size={14} color={colors.textMuted} />
           {isEditing ? (
             <TextInput
-              style={styles.inlineInput}
+              style={[styles.inlineInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.border }]}
               value={editLocation}
               onChangeText={setEditLocation}
               placeholder="Location"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textMuted}
             />
           ) : (
-            <Text style={styles.metaText}>{location}</Text>
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>{location}</Text>
           )}
         </View>
 
         <View style={styles.metaRow}>
-          <Feather name="link" size={14} color="#6b7280" />
+          <Feather name="link" size={14} color={colors.textMuted} />
           {isEditing ? (
             <TextInput
-              style={styles.inlineInput}
+              style={[styles.inlineInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.border }]}
               value={editWebsite}
               onChangeText={setEditWebsite}
               placeholder="Website URL"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               keyboardType="url"
             />
           ) : (
-            <Text style={[styles.metaText, styles.linkText]}>{website}</Text>
+            <Text style={[styles.metaText, styles.linkText, { color: colors.secondary }]}>{website}</Text>
           )}
         </View>
 
         {isEditing && (
-          <View style={styles.passwordSection}>
+          <View style={[styles.passwordSection, { borderTopColor: colors.border }]}>
             <View style={styles.metaRow}>
-              <Feather name="lock" size={14} color="#6b7280" />
+              <Feather name="lock" size={14} color={colors.textMuted} />
               <TextInput
-                style={styles.inlineInput}
+                style={[styles.inlineInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.border }]}
                 value={editCurrentPassword}
                 onChangeText={setEditCurrentPassword}
                 placeholder="Current password"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry
               />
             </View>
             <View style={styles.metaRow}>
-              <Feather name="lock" size={14} color="#6b7280" />
+              <Feather name="lock" size={14} color={colors.textMuted} />
               <TextInput
-                style={styles.inlineInput}
+                style={[styles.inlineInput, { color: colors.text, backgroundColor: colors.inputBg, borderColor: colors.border }]}
                 value={editPassword}
                 onChangeText={setEditPassword}
                 placeholder="New password"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry
               />
             </View>
@@ -300,41 +305,41 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
 
         {!isEditing && (
           <View style={styles.metaRow}>
-            <Feather name="calendar" size={14} color="#6b7280" />
-            <Text style={styles.metaText}>Joined July 2026</Text>
+            <Feather name="calendar" size={14} color={colors.textMuted} />
+            <Text style={[styles.metaText, { color: colors.textMuted }]}>Joined July 2026</Text>
           </View>
         )}
 
-        <View style={styles.statsRow}>
+        <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
           <View style={styles.statBlock}>
-            <Text style={styles.statNumber}>{userPosts.length}</Text>
-            <Text style={styles.statLabel}>Posts</Text>
+            <Text style={[styles.statNumber, { color: colors.text }]}>{userPosts.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Posts</Text>
           </View>
           <View style={styles.statBlock}>
-            <Text style={styles.statNumber}>{profileUser?.followerCount ?? 0}</Text>
-            <Text style={styles.statLabel}>Followers</Text>
+            <Text style={[styles.statNumber, { color: colors.text }]}>{profileUser?.followerCount ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Followers</Text>
           </View>
           <View style={styles.statBlock}>
-            <Text style={styles.statNumber}>{profileUser?.followingCount ?? 0}</Text>
-            <Text style={styles.statLabel}>Following</Text>
+            <Text style={[styles.statNumber, { color: colors.text }]}>{profileUser?.followingCount ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Following</Text>
           </View>
         </View>
       </View>
 
-      <View style={styles.sectionTitleContainer}>
-        <Feather name="message-square" size={20} color="#1a1a2e" />
-        <Text style={styles.sectionTitle}>Recent Posts</Text>
+      <View style={[styles.sectionTitleContainer, { backgroundColor: colors.inputBg, borderBottomColor: colors.border }]}>
+        <Feather name="message-square" size={20} color={colors.text} />
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Posts</Text>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.navBar}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.navBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <Feather name="arrow-left" size={24} color="#1a1a2e" />
+          <Feather name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Profile</Text>
+        <Text style={[styles.navTitle, { color: colors.text }]}>Profile</Text>
         <View style={{ width: 24 }} />
       </View>
 

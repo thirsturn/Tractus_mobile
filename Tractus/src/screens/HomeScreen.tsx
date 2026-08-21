@@ -12,6 +12,7 @@ import ThreadCard from '../components/ThreadCard';
 import TopNav from '../components/TopNav';
 import type { ThreadResponse } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import threadService from '../services/thread.service';
 
 interface HomeScreenProps {
@@ -24,6 +25,7 @@ interface HomeScreenProps {
 export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost, onExplorePress }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>([]);
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   React.useEffect(() => {
     const fetchThreads = async () => {
@@ -41,10 +43,10 @@ export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost,
   const renderHeader = () => (
     <View style={styles.header}>
       <View>
-        <Text style={styles.headerTitle}>Home Feed</Text>
-        <Text style={styles.headerSubtitle}>Join the discussion</Text>
+        <Text style={[styles.headerTitle, { color: colors.primary }]}>Home Feed</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Join the discussion</Text>
       </View>
-      <TouchableOpacity style={styles.createBtn} onPress={onCreatePost}>
+      <TouchableOpacity style={[styles.createBtn, { backgroundColor: colors.secondary, shadowColor: colors.secondary }]} onPress={onCreatePost}>
         <Feather name="plus" size={18} color="#ffffff" style={styles.createBtnIconText} />
         <Text style={styles.createBtnText}>Create Post</Text>
       </TouchableOpacity>
@@ -52,7 +54,7 @@ export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost,
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <TopNav onUserSelect={onUserSelect} onThreadSelect={onThreadSelect} onExplorePress={onExplorePress} />
       <View style={styles.container}>
         <FlatList
@@ -77,7 +79,7 @@ export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost,
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#e3fbf6', // Match web app background
+    backgroundColor: '#f0e9ef',
   },
   container: {
     flex: 1,
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Urbanist',
     fontSize: 28,
     fontWeight: '800',
-    color: '#2a067a', // Deep purple
+    color: '#2a067a',
   },
   headerSubtitle: {
     fontFamily: 'Urbanist',
@@ -108,7 +110,7 @@ const styles = StyleSheet.create({
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fa477a', // Vibrant pink
+    backgroundColor: '#fa477a',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,

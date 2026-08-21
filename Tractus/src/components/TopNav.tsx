@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, F
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface TopNavProps {
   onUserSelect?: (username: string) => void;
@@ -15,6 +16,7 @@ const INITIAL_NOTIFICATIONS: { id: number; type: string; user: string; action: s
 
 export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }: TopNavProps) {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme, colors } = useTheme();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
@@ -33,27 +35,31 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
 
   const renderNotification = ({ item }: { item: typeof INITIAL_NOTIFICATIONS[0] }) => (
     <TouchableOpacity 
-      style={[styles.notificationItem, !item.read && styles.notificationItemUnread]}
+      style={[
+        styles.notificationItem, 
+        { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        !item.read && { backgroundColor: colors.subtleBg }
+      ]}
       onPress={() => handleNotificationPress(item.threadId)}
     >
-      <View style={styles.notificationIconContainer}>
-        {item.type === 'upvote' && <Feather name="heart" size={16} color="#fa477a" />}
-        {item.type === 'comment' && <Feather name="message-square" size={16} color="#3b82f6" />}
-        {item.type === 'mention' && <Feather name="at-sign" size={16} color="#7fbd78" />}
+      <View style={[styles.notificationIconContainer, { backgroundColor: colors.inputBg }]}>
+        {item.type === 'upvote' && <Feather name="heart" size={16} color={colors.secondary} />}
+        {item.type === 'comment' && <Feather name="message-square" size={16} color={colors.primary} />}
+        {item.type === 'mention' && <Feather name="at-sign" size={16} color={colors.accent} />}
       </View>
       <View style={styles.notificationContent}>
-        <Text style={styles.notificationText}>
-          <Text style={styles.notificationUser}>{item.user} </Text>
+        <Text style={[styles.notificationText, { color: colors.textMuted }]}>
+          <Text style={[styles.notificationUser, { color: colors.text }]}>{item.user} </Text>
           {item.action}
         </Text>
-        <Text style={styles.notificationTime}>{item.time}</Text>
+        <Text style={[styles.notificationTime, { color: colors.textMuted }]}>{item.time}</Text>
       </View>
-      {!item.read && <View style={styles.unreadDot} />}
+      {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.secondary }]} />}
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
       {/* Brand / Logo */}
       <TouchableOpacity style={styles.brandContainer}>
         <Image
@@ -63,18 +69,22 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
         />
       </TouchableOpacity>
 
-      {/* Actions (Notifications & Profile) */}
+      {/* Actions (Theme, Search, Notifications & Profile) */}
       <View style={styles.actionsContainer}>
+        <TouchableOpacity style={styles.iconBtn} onPress={toggleTheme}>
+          <Feather name={isDark ? "sun" : "moon"} size={22} color={isDark ? "#f59e0b" : colors.text} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconBtn} onPress={onExplorePress}>
-          <Feather name="search" size={22} color="#1a1a2e" />
+          <Feather name="search" size={22} color={colors.text} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.iconBtn} onPress={() => setIsNotificationsOpen(true)}>
-          <Feather name="bell" size={22} color="#1a1a2e" />
-          {unreadCount > 0 && <View style={styles.notificationBadge} />}
+          <Feather name="bell" size={22} color={colors.text} />
+          {unreadCount > 0 && <View style={[styles.notificationBadge, { backgroundColor: colors.secondary, borderColor: colors.surface }]} />}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.profileBtn} onPress={() => onUserSelect && user && onUserSelect(user.username)}>
+        <TouchableOpacity style={[styles.profileBtn, { backgroundColor: colors.primary }]} onPress={() => onUserSelect && user && onUserSelect(user.username)}>
           {user?.profileImageUrl ? (
             <Image source={{ uri: user.profileImageUrl }} style={styles.profileImage} contentFit="cover" />
           ) : (
@@ -89,19 +99,19 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
         animationType="slide"
         onRequestClose={() => setIsNotificationsOpen(false)}
       >
-        <SafeAreaView style={styles.modalSafeArea}>
-          <View style={styles.notificationsDropdown}>
-            <View style={styles.notificationsHeader}>
+        <SafeAreaView style={[styles.modalSafeArea, { backgroundColor: colors.surface }]}>
+          <View style={[styles.notificationsDropdown, { backgroundColor: colors.surface }]}>
+            <View style={[styles.notificationsHeader, { borderBottomColor: colors.border }]}>
               <View style={styles.headerLeft}>
                 <TouchableOpacity onPress={() => setIsNotificationsOpen(false)} style={styles.closeBtn}>
-                  <Feather name="x" size={24} color="#1a1a2e" />
+                  <Feather name="x" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.notificationsTitle}>Notifications</Text>
+                <Text style={[styles.notificationsTitle, { color: colors.text }]}>Notifications</Text>
               </View>
               {unreadCount > 0 && (
                 <TouchableOpacity style={styles.markReadBtn} onPress={markAllAsRead}>
-                  <Feather name="check" size={14} color="#fa477a" />
-                  <Text style={styles.markReadText}>Mark all read</Text>
+                  <Feather name="check" size={14} color={colors.secondary} />
+                  <Text style={[styles.markReadText, { color: colors.secondary }]}>Mark all read</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -112,7 +122,7 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
               renderItem={renderNotification}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>You're all caught up!</Text>
+                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>You're all caught up!</Text>
                 </View>
               }
             />
@@ -149,7 +159,7 @@ const styles = StyleSheet.create({
   },
   iconBtn: {
     padding: 8,
-    marginRight: 12,
+    marginRight: 8,
     position: 'relative',
   },
   notificationBadge: {
@@ -234,7 +244,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
   },
   notificationItemUnread: {
-    backgroundColor: '#fff1f2', // very light pink bg for unread
+    backgroundColor: '#fff1f2',
   },
   notificationIconContainer: {
     width: 32,

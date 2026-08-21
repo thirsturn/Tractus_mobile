@@ -9,16 +9,18 @@ import CreatePostScreen from './src/screens/CreatePostScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
 import ExploreScreen from './src/screens/ExploreScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const { isDark, colors } = useTheme();
   const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [isExploring, setIsExploring] = useState(false);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       {isAuthenticated ? (
         isCreatingPost ? (
           <CreatePostScreen
@@ -56,7 +58,7 @@ function AppContent() {
       ) : (
         <LoginScreen />
       )}
-      <StatusBar style="auto" />
+      <StatusBar style={isDark ? "light" : "dark"} />
     </View>
   );
 }
@@ -71,8 +73,10 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

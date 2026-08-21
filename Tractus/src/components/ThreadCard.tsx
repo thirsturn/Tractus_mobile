@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse } from '../types';
 import { LOCAL_IP } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 
 interface ThreadCardProps {
   thread: ThreadResponse;
@@ -12,12 +13,19 @@ interface ThreadCardProps {
 }
 
 export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCardProps) {
+  const { colors } = useTheme();
   const upvotes = Math.floor(Math.random() * 50); // To be replaced with real vote data
   const commentsCount = thread.commentCount || 0;
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[
+        styles.card, 
+        { 
+          backgroundColor: colors.card, 
+          borderColor: colors.border 
+        }
+      ]}
       activeOpacity={0.7}
       onPress={onPress}
     >
@@ -29,20 +37,20 @@ export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCard
             style={{ flexDirection: 'row', alignItems: 'center' }}
             onPress={() => onUserSelect && onUserSelect(thread.author.username)}
           >
-            <View style={styles.avatar}>
+            <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
               <Text style={styles.avatarText}>
                 {thread.author.username.charAt(0).toUpperCase()}
               </Text>
             </View>
-            <Text style={styles.authorName}>{thread.author.username}</Text>
+            <Text style={[styles.authorName, { color: colors.text }]}>{thread.author.username}</Text>
           </TouchableOpacity>
-          <Text style={styles.metaText}>• Just now</Text>
+          <Text style={[styles.metaText, { color: colors.textMuted }]}>• Just now</Text>
         </View>
 
-        <Text style={styles.title}>{thread.title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{thread.title}</Text>
 
         {thread.content && (
-          <Text style={styles.previewText} numberOfLines={3}>
+          <Text style={[styles.previewText, { color: colors.textMuted }]} numberOfLines={3}>
             {thread.content}
           </Text>
         )}
@@ -58,9 +66,9 @@ export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCard
         )}
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn}>
-            <Feather name="message-square" size={16} color="#6b7280" />
-            <Text style={styles.actionText}>{commentsCount} Comments</Text>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.inputBg }]}>
+            <Feather name="message-square" size={16} color={colors.textMuted} />
+            <Text style={[styles.actionText, { color: colors.textMuted }]}>{commentsCount} Comments</Text>
           </TouchableOpacity>
         </View>
       </View>

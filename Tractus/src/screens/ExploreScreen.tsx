@@ -16,6 +16,7 @@ import spaceService from '../services/space.service';
 import threadService from '../services/thread.service';
 import voteService from '../services/vote.service';
 import type { ThreadResponse } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 interface ExploreScreenProps {
   onBack: () => void;
@@ -24,6 +25,7 @@ interface ExploreScreenProps {
 }
 
 export default function ExploreScreen({ onBack, onThreadSelect, onUserSelect }: ExploreScreenProps) {
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [threads, setThreads] = useState<ThreadResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,38 +77,38 @@ export default function ExploreScreen({ onBack, onThreadSelect, onUserSelect }: 
   }, [threads, searchQuery]);
 
   const renderHeader = () => (
-    <View style={styles.searchHub}>
-      <Text style={styles.title}>Explore Tractus</Text>
-      <Text style={styles.subtitle}>Search for discussions by title or content.</Text>
-      <View style={styles.searchInputContainer}>
-        <Feather name="search" size={18} color="#9ca3af" style={styles.searchIcon} />
+    <View style={[styles.searchHub, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Explore Tractus</Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>Search for discussions by title or content.</Text>
+      <View style={[styles.searchInputContainer, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+        <Feather name="search" size={18} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search threads..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
-      <View style={styles.trendingTab}>
+      <View style={[styles.trendingTab, { backgroundColor: colors.primary }]}>
         <Feather name="zap" size={16} color="#ffffff" />
         <Text style={styles.trendingTabText}>Trending Threads</Text>
       </View>
-      {isLoading && <Text style={styles.statusText}>Loading trending threads...</Text>}
+      {isLoading && <Text style={[styles.statusText, { color: colors.textMuted }]}>Loading trending threads...</Text>}
       {error && <Text style={[styles.statusText, styles.errorText]}>{error}</Text>}
       {!isLoading && !error && displayThreads.length === 0 && (
-        <Text style={styles.statusText}>No threads found.</Text>
+        <Text style={[styles.statusText, { color: colors.textMuted }]}>No threads found.</Text>
       )}
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.navBar}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.navBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <Feather name="arrow-left" size={24} color="#1a1a2e" />
+          <Feather name="arrow-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>Explore</Text>
+        <Text style={[styles.navTitle, { color: colors.text }]}>Explore</Text>
         <View style={{ width: 24 }} />
       </View>
 
