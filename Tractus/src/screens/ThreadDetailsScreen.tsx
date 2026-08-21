@@ -17,6 +17,7 @@ import threadService from '../services/thread.service';
 import commentService from '../services/comment.service';
 import voteService from '../services/vote.service';
 import { LOCAL_IP } from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 import type { ThreadResponse, CommentResponse, VoteResponse } from '../types';
 
 interface ThreadDetailsScreenProps {
@@ -185,9 +186,17 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
               style={{ flexDirection: 'row', alignItems: 'center' }}
               onPress={() => onUserSelect && onUserSelect(thread.author.username)}
             >
-              <View style={styles.authorAvatar}>
-                <Text style={styles.authorAvatarText}>{thread.author.username.charAt(0).toUpperCase()}</Text>
-              </View>
+              {thread.author.profileImageUrl ? (
+                <Image 
+                  source={{ uri: getImageUrl(thread.author.profileImageUrl) }} 
+                  style={styles.authorAvatar} 
+                  contentFit="cover" 
+                />
+              ) : (
+                <View style={styles.authorAvatar}>
+                  <Text style={styles.authorAvatarText}>{thread.author.username.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
               <View style={styles.postMeta}>
                 <Text style={styles.authorName}>{thread.author.username}</Text>
                 <Text style={styles.timePosted}>Just now</Text>
@@ -206,7 +215,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
             
             {thread.imageUrl && (
               <Image 
-                source={{ uri: thread.imageUrl.replace('http://localhost', 'http://192.168.1.100') }} 
+                source={{ uri: getImageUrl(thread.imageUrl) }} 
                 style={{ width: '100%', height: 250, borderRadius: 12, marginTop: 12 }} 
                 contentFit="cover" 
               />
@@ -253,7 +262,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
           <View style={styles.commentInputArea}>
             {user?.profileImageUrl ? (
               <Image 
-                source={{ uri: user.profileImageUrl }} 
+                source={{ uri: getImageUrl(user.profileImageUrl) }} 
                 style={styles.smallAvatar} 
                 contentFit="cover" 
               />
@@ -288,7 +297,7 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
               <View key={comment.id} style={styles.comment}>
                 {comment.author.profileImageUrl ? (
                   <Image 
-                    source={{ uri: comment.author.profileImageUrl }} 
+                    source={{ uri: getImageUrl(comment.author.profileImageUrl) }} 
                     style={styles.smallAvatar} 
                     contentFit="cover" 
                   />

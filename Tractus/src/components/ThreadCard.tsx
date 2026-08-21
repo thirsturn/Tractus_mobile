@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import type { ThreadResponse } from '../types';
-import { LOCAL_IP } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface ThreadCardProps {
   thread: ThreadResponse;
@@ -37,11 +37,19 @@ export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCard
             style={{ flexDirection: 'row', alignItems: 'center' }}
             onPress={() => onUserSelect && onUserSelect(thread.author.username)}
           >
-            <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
-              <Text style={styles.avatarText}>
-                {thread.author.username.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            {thread.author.profileImageUrl ? (
+              <Image 
+                source={{ uri: getImageUrl(thread.author.profileImageUrl) }} 
+                style={styles.avatar} 
+                contentFit="cover" 
+              />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: colors.accent }]}>
+                <Text style={styles.avatarText}>
+                  {thread.author.username.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
             <Text style={[styles.authorName, { color: colors.text }]}>{thread.author.username}</Text>
           </TouchableOpacity>
           <Text style={[styles.metaText, { color: colors.textMuted }]}>• Just now</Text>
@@ -58,7 +66,7 @@ export default function ThreadCard({ thread, onPress, onUserSelect }: ThreadCard
         {thread.imageUrl && (
           <View style={styles.imageContainer}>
             <Image 
-              source={{ uri: thread.imageUrl.replace('http://localhost', `http://${LOCAL_IP}`) }}
+              source={{ uri: getImageUrl(thread.imageUrl) }}
               style={styles.threadImage} 
               contentFit="cover" 
             />

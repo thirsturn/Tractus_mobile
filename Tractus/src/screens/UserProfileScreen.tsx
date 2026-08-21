@@ -17,6 +17,7 @@ import userService from '../services/user.service';
 import threadService from '../services/thread.service';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
+import { getImageUrl } from '../utils/imageUrl';
 
 export interface UserProfileScreenProps {
   username: string;
@@ -166,7 +167,7 @@ export default function UserProfileScreen({ username, onBack, onThreadSelect, on
         <View style={styles.avatarWrapper}>
           <View style={[styles.avatarLarge, { backgroundColor: colors.accent, borderColor: colors.surface }]}>
             {profileUser?.profileImageUrl ? (
-              <Image source={{ uri: profileUser.profileImageUrl }} style={{ width: '100%', height: '100%', borderRadius: 40 }} contentFit="cover" />
+              <Image source={{ uri: getImageUrl(profileUser.profileImageUrl) }} style={{ width: '100%', height: '100%', borderRadius: 40 }} contentFit="cover" />
             ) : (
               <Text style={styles.avatarTextLarge}>{username.charAt(0).toUpperCase()}</Text>
             )}

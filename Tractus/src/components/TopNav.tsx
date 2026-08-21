@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { getImageUrl } from '../utils/imageUrl';
 
 interface TopNavProps {
   onUserSelect?: (username: string) => void;
@@ -86,7 +87,7 @@ export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }:
 
         <TouchableOpacity style={[styles.profileBtn, { backgroundColor: colors.primary }]} onPress={() => onUserSelect && user && onUserSelect(user.username)}>
           {user?.profileImageUrl ? (
-            <Image source={{ uri: user.profileImageUrl }} style={styles.profileImage} contentFit="cover" />
+            <Image source={{ uri: getImageUrl(user.profileImageUrl) }} style={styles.profileImage} contentFit="cover" />
           ) : (
             <Text style={styles.profileText}>{user?.username?.charAt(0).toUpperCase() || 'U'}</Text>
           )}
