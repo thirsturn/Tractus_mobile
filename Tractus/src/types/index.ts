@@ -11,6 +11,9 @@ export interface User {
   phoneNumber?: string;
   dateOfBirth?: string;
   gender?: string;
+  followerCount?: number;
+  followingCount?: number;
+  following?: boolean;
 }
 
 export interface ThreadResponse {
@@ -21,6 +24,12 @@ export interface ThreadResponse {
   author: User;
   spaceId: number;
   commentCount?: number;
+}
+
+export interface SpaceResponse {
+  id: number;
+  name: string;
+  description?: string;
 }
 
 export interface CommentResponse {

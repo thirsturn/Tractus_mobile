@@ -7,6 +7,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import ThreadDetailsScreen from './src/screens/ThreadDetailsScreen';
 import CreatePostScreen from './src/screens/CreatePostScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
+import ExploreScreen from './src/screens/ExploreScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 function AppContent() {
@@ -14,14 +15,21 @@ function AppContent() {
   const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [isExploring, setIsExploring] = useState(false);
 
   return (
     <View style={{ flex: 1 }}>
       {isAuthenticated ? (
         isCreatingPost ? (
-          <CreatePostScreen 
-            onBack={() => setIsCreatingPost(false)} 
-            onSuccess={() => setIsCreatingPost(false)} 
+          <CreatePostScreen
+            onBack={() => setIsCreatingPost(false)}
+            onSuccess={() => setIsCreatingPost(false)}
+          />
+        ) : isExploring ? (
+          <ExploreScreen
+            onBack={() => setIsExploring(false)}
+            onThreadSelect={(id) => { setIsExploring(false); setSelectedThreadId(id); }}
+            onUserSelect={(username) => { setIsExploring(false); setSelectedUsername(username); }}
           />
         ) : selectedUsername ? (
           <UserProfileScreen 
@@ -38,10 +46,11 @@ function AppContent() {
             onThreadSelect={setSelectedThreadId}
           />
         ) : (
-          <HomeScreen 
-            onThreadSelect={setSelectedThreadId} 
+          <HomeScreen
+            onThreadSelect={setSelectedThreadId}
             onUserSelect={setSelectedUsername}
-            onCreatePost={() => setIsCreatingPost(true)} 
+            onCreatePost={() => setIsCreatingPost(true)}
+            onExplorePress={() => setIsExploring(true)}
           />
         )
       ) : (

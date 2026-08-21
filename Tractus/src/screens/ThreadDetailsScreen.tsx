@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import threadService from '../services/thread.service';
 import commentService from '../services/comment.service';
 import voteService from '../services/vote.service';
+import { LOCAL_IP } from '../services/api';
 import type { ThreadResponse, CommentResponse, VoteResponse } from '../types';
 
 interface ThreadDetailsScreenProps {
@@ -149,9 +150,11 @@ export default function ThreadDetailsScreen({ threadId, onBack, onUserSelect, on
   };
 
   const handleShare = async () => {
+    const url = `http://${LOCAL_IP}:5173/thread/${threadId}`;
     try {
       await Share.share({
-        message: `Check out this thread on Tractus: "${thread?.title || ''}"`,
+        message: `Check out this thread on Tractus: "${thread?.title || ''}" ${url}`,
+        url,
       });
     } catch (error) {
       console.error(error);

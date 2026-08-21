@@ -7,12 +7,13 @@ import { useAuth } from '../context/AuthContext';
 interface TopNavProps {
   onUserSelect?: (username: string) => void;
   onThreadSelect?: (id: number) => void;
+  onExplorePress?: () => void;
 }
 
 // TODO: Fetch real notifications from backend
 const INITIAL_NOTIFICATIONS: { id: number; type: string; user: string; action: string; time: string; read: boolean; threadId: number }[] = [];
 
-export default function TopNav({ onUserSelect, onThreadSelect }: TopNavProps) {
+export default function TopNav({ onUserSelect, onThreadSelect, onExplorePress }: TopNavProps) {
   const { user, logout } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
@@ -64,6 +65,10 @@ export default function TopNav({ onUserSelect, onThreadSelect }: TopNavProps) {
 
       {/* Actions (Notifications & Profile) */}
       <View style={styles.actionsContainer}>
+        <TouchableOpacity style={styles.iconBtn} onPress={onExplorePress}>
+          <Feather name="search" size={22} color="#1a1a2e" />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.iconBtn} onPress={() => setIsNotificationsOpen(true)}>
           <Feather name="bell" size={22} color="#1a1a2e" />
           {unreadCount > 0 && <View style={styles.notificationBadge} />}

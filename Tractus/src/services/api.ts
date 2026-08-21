@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Replace with your computer's local IP address (e.g. 192.168.1.X) so your phone can reach the backend
-export const LOCAL_IP = '192.168.1.100'; // Update this!
+export const LOCAL_IP = '10.252.219.91'; // Update this!
 
 const api = axios.create({
   baseURL: `http://${LOCAL_IP}:8081/api`, 

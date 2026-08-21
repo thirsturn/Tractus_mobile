@@ -18,9 +18,10 @@ interface HomeScreenProps {
   onThreadSelect?: (id: number) => void;
   onUserSelect?: (username: string) => void;
   onCreatePost?: () => void;
+  onExplorePress?: () => void;
 }
 
-export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost }: HomeScreenProps) {
+export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost, onExplorePress }: HomeScreenProps) {
   const [threads, setThreads] = useState<ThreadResponse[]>([]);
   const { user } = useAuth();
 
@@ -52,7 +53,7 @@ export default function HomeScreen({ onThreadSelect, onUserSelect, onCreatePost 
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <TopNav onUserSelect={onUserSelect} onThreadSelect={onThreadSelect} />
+      <TopNav onUserSelect={onUserSelect} onThreadSelect={onThreadSelect} onExplorePress={onExplorePress} />
       <View style={styles.container}>
         <FlatList
           data={threads}
