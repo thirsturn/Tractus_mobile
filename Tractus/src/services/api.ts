@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const LOCAL_IP = 'full-lamps-doubt.loca.lt';
+export const LOCAL_IP = 'tall-carpets-fry.loca.lt';
 
 const api = axios.create({
   baseURL: `https://${LOCAL_IP}/api`, 
